@@ -2,15 +2,26 @@
 
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env", "../../.env"), extra="ignore")
+    model_config = SettingsConfigDict(env_file=("../../.env", ".env"), extra="ignore")
 
     app_env: str = "dev"
     tz: str = "Asia/Jakarta"
     database_url: str = "sqlite:///./fitbudget.db"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg(cls, value: str) -> str:
+        # Supabase's Connect dialog supplies a standard PostgreSQL URI.
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix):]
+        return value
+
     secret_key: str = "dev-secret-key-change-me-please-32chars!!"
     session_ttl_minutes: int = 720
     cookie_secure: bool = False

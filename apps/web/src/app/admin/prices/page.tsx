@@ -88,21 +88,21 @@ export default function AdminPricesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin — Harga Pangan & Impor CSV</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-content">Harga pangan</h1>
+          <p className="text-sm text-muted">
             Riwayat harga bersifat append-only agar rencana makan yang telah dikonfirmasi tetap dapat direproduksi.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
-          <Link href="/admin/foods" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/foods" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Pangan
           </Link>
-          <Link href="/admin/exercises" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/exercises" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Latihan
           </Link>
-          <Link href="/admin/audit" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/audit" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Log Audit
           </Link>
         </div>
@@ -110,7 +110,7 @@ export default function AdminPricesPage() {
 
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
       {banner ? (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive">
           ✓ {banner}
         </div>
       ) : null}
@@ -118,18 +118,18 @@ export default function AdminPricesPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <form
           onSubmit={handleAddSinglePrice}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3"
+          className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3"
         >
-          <h2 className="text-base font-bold text-slate-900">Tambah Harga Satuan</h2>
+          <h2 className="text-base font-bold text-content">Tambah Harga Satuan</h2>
           <div>
-            <label htmlFor="p-food" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="p-food" className="block text-xs font-semibold text-secondary">
               Bahan Pangan
             </label>
             <select
               id="p-food"
               value={foodId}
               onChange={(e) => setFoodId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             >
               {foods.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -139,7 +139,7 @@ export default function AdminPricesPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="p-idr" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="p-idr" className="block text-xs font-semibold text-secondary">
               Harga Baru (Rp per 100g)
             </label>
             <input
@@ -150,11 +150,11 @@ export default function AdminPricesPage() {
               required
               value={priceIdr}
               onChange={(e) => setPriceIdr(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="p-source" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="p-source" className="block text-xs font-semibold text-secondary">
               Sumber Harga
             </label>
             <input
@@ -163,11 +163,11 @@ export default function AdminPricesPage() {
               required
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="p-reason" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="p-reason" className="block text-xs font-semibold text-secondary">
               Alasan Audit (wajib)
             </label>
             <input
@@ -176,20 +176,20 @@ export default function AdminPricesPage() {
               required
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+            className="rounded-lg bg-positive-hover px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
           >
             Simpan Harga Baru
           </button>
         </form>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-          <h2 className="text-base font-bold text-slate-900">Impor Massal CSV (dengan Dry-Run)</h2>
-          <label htmlFor="csv-textarea" className="block text-xs font-semibold text-slate-700">
+        <div className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-content">Impor Massal CSV (dengan Dry-Run)</h2>
+          <label htmlFor="csv-textarea" className="block text-xs font-semibold text-secondary">
             Isi CSV (`food_code,region,price_idr_per_100g,source,recorded_at`)
           </label>
           <textarea
@@ -197,9 +197,9 @@ export default function AdminPricesPage() {
             rows={5}
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs"
+            className="w-full rounded-lg border border-line-strong p-2 font-mono text-xs"
           />
-          <label className="flex items-center gap-2 text-xs text-slate-700">
+          <label className="flex items-center gap-2 text-xs text-secondary">
             <input
               type="checkbox"
               checked={confirmLarge}
@@ -211,31 +211,31 @@ export default function AdminPricesPage() {
             <button
               type="button"
               onClick={() => handleCsvImport(true)}
-              className="rounded-lg border border-slate-300 bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-200"
+              className="rounded-lg border border-line-strong bg-raised px-3.5 py-2 text-xs font-semibold text-secondary hover:bg-line"
             >
               1. Pratinjau (Dry-Run)
             </button>
             <button
               type="button"
               onClick={() => handleCsvImport(false)}
-              className="rounded-lg bg-indigo-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-800"
+              className="rounded-lg bg-accent-hover px-3.5 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
             >
               2. Terapkan Impor CSV
             </button>
           </div>
           {importResult ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
+            <div className="rounded-lg border border-line bg-inset p-3 text-xs space-y-1">
               <div>
                 Baris valid: <strong>{importResult.valid_rows}</strong> • Diterapkan:{" "}
                 <strong>{String(importResult.applied)}</strong>
               </div>
               {importResult.warnings?.length > 0 ? (
-                <div className="text-amber-800">
+                <div className="text-warning">
                   Peringatan lonjakan (&gt;50%): {importResult.warnings.length} baris
                 </div>
               ) : null}
               {importResult.errors?.length > 0 ? (
-                <div className="text-rose-800">Error: {JSON.stringify(importResult.errors)}</div>
+                <div className="text-danger">Error: {JSON.stringify(importResult.errors)}</div>
               ) : null}
             </div>
           ) : null}

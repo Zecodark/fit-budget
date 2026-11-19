@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureBanner } from "@/components/FeatureBanner";
+
 import React, { useEffect, useState } from "react";
 import { ConsultBlockBanner, ErrorBanner } from "@/components/StatusWidgets";
 import { ApiClientError, apiFetch } from "@/lib/api";
@@ -112,17 +114,13 @@ export default function WorkoutPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+    <div className="space-y-5">
+      <FeatureBanner kind="strength" title="Jadwal latihan">Susun 2–4 sesi per minggu sesuai peralatan dan waktu pemulihan Anda.</FeatureBanner>
+      <div className="rounded-xl border border-line bg-panel p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Jadwal Latihan Mingguan (2–4 Sesi)</h1>
-            <p className="text-xs text-slate-600">
-              Pemilihan hari deterministik dengan aturan jeda pemulihan (recovery) dan filter ketersediaan alat.
-            </p>
-          </div>
+          <h2 className="text-base font-semibold">Atur rencana</h2>
           {plan ? (
-            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-900">
+            <span className="rounded-full bg-accent-wash px-3 py-1 text-xs font-semibold text-accent-ink">
               Status: {plan.status} (v{plan.version})
             </span>
           ) : null}
@@ -130,7 +128,7 @@ export default function WorkoutPage() {
 
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label htmlFor="wo-week" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="wo-week" className="block text-xs font-semibold text-secondary mb-1">
               Senin Minggu Latihan
             </label>
             <input
@@ -138,7 +136,7 @@ export default function WorkoutPage() {
               type="date"
               value={weekStart}
               onChange={(e) => setWeekStart(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm"
+              className="rounded border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <button
@@ -146,7 +144,7 @@ export default function WorkoutPage() {
             disabled={generating || consultBlocked}
             onClick={handleGenerate}
             data-testid="generate-workout-btn"
-            className="rounded bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-accent-action px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {generating ? "Menyusun..." : "Generate Jadwal Gym"}
           </button>
@@ -154,7 +152,7 @@ export default function WorkoutPage() {
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+              className="rounded bg-positive-action px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
             >
               Konfirmasi Jadwal
             </button>
@@ -166,7 +164,7 @@ export default function WorkoutPage() {
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
 
       {plan?.warnings && plan.warnings.length > 0 ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 space-y-1">
+        <div className="rounded-lg border border-warning-line bg-warning-soft p-4 text-xs text-warning space-y-1">
           <div className="font-semibold">⚠ Peringatan Penjadwalan &amp; Pemulihan:</div>
           {plan.warnings.map((w: any, i: number) => (
             <div key={`${w.code}-${i}`}>
@@ -177,21 +175,21 @@ export default function WorkoutPage() {
       ) : null}
 
       {loading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+        <div className="rounded-xl border border-line bg-panel p-6 text-sm text-muted">
           Memuat jadwal latihan...
         </div>
       ) : plan ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {plan.sessions.map((s: any) => (
-            <div key={s.id} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+            <div key={s.id} className="rounded-xl border border-line bg-panel p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2 border-b border-line pb-2">
                 <div>
-                  <div className="text-sm font-bold text-slate-900">
+                  <div className="text-sm font-bold text-content">
                     {s.template_code} — {s.date}
                   </div>
-                  <div className="text-[11px] text-slate-500">Estimasi durasi: {s.estimated_minutes} menit</div>
+                  <div className="text-[11px] text-muted">Estimasi durasi: {s.estimated_minutes} menit</div>
                 </div>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800">
+                <span className="rounded bg-raised px-2 py-0.5 text-xs font-medium text-secondary">
                   {s.status}
                 </span>
               </div>
@@ -200,14 +198,14 @@ export default function WorkoutPage() {
                 <button
                   type="button"
                   onClick={() => handleSessionStatus(s.id, "completed")}
-                  className="rounded bg-emerald-600 px-2.5 py-1 text-white font-medium"
+                  className="rounded bg-positive-action px-2.5 py-1 text-white font-medium"
                 >
                   ✓ Selesai
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSessionStatus(s.id, "skipped")}
-                  className="rounded bg-amber-600 px-2.5 py-1 text-white font-medium"
+                  className="rounded bg-warning-soft px-2.5 py-1 text-warning font-medium"
                 >
                   Lewati
                 </button>
@@ -222,12 +220,12 @@ export default function WorkoutPage() {
                   type="date"
                   value={moveDates[s.id] || ""}
                   onChange={(e) => setMoveDates((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                  className="rounded border border-slate-300 px-2 py-1 text-xs flex-1"
+                  className="rounded border border-line-strong px-2 py-1 text-xs flex-1"
                 />
                 <button
                   type="button"
                   onClick={() => handleMoveSession(s.id)}
-                  className="rounded border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800"
+                  className="rounded border border-accent-line bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-ink"
                 >
                   Pindah Tanggal
                 </button>
@@ -235,24 +233,24 @@ export default function WorkoutPage() {
 
               <ul className="space-y-2.5 text-xs pt-1">
                 {s.exercises.map((ex: any) => (
-                  <li key={ex.id} className="rounded border border-slate-200 p-2.5 space-y-1">
-                    <div className="font-semibold text-slate-900">
+                  <li key={ex.id} className="rounded border border-line p-2.5 space-y-1">
+                    <div className="font-semibold text-content">
                       {ex.position}. {ex.name}{" "}
-                      <span className="text-[11px] font-normal text-slate-500">({ex.pattern})</span>
+                      <span className="text-[11px] font-normal text-muted">({ex.pattern})</span>
                     </div>
-                    <div className="text-slate-700">
+                    <div className="text-secondary">
                       {ex.sets} set × {ex.reps_min}–{ex.reps_max} {ex.unit} • Istirahat {ex.rest_s} dtk
                     </div>
-                    <p className="text-[11px] text-slate-600">{ex.instructions}</p>
+                    <p className="text-[11px] text-muted">{ex.instructions}</p>
                     {ex.alternatives && ex.alternatives.length > 0 ? (
                       <div className="flex flex-wrap items-center gap-1 pt-1">
-                        <span className="text-[11px] text-slate-500">Alternatif:</span>
+                        <span className="text-[11px] text-muted">Alternatif:</span>
                         {ex.alternatives.map((alt: any) => (
                           <button
                             key={alt.exercise_id}
                             type="button"
                             onClick={() => handleSwapExercise(s.id, ex.id, alt.exercise_id)}
-                            className="rounded border border-slate-300 px-1.5 py-0.5 text-[11px] hover:bg-slate-100"
+                            className="rounded border border-line-strong px-1.5 py-0.5 text-[11px] hover:bg-raised"
                           >
                             Ganti ke {alt.name}
                           </button>
@@ -266,7 +264,7 @@ export default function WorkoutPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+        <div className="rounded-xl border border-line bg-panel p-6 text-sm text-muted">
           Belum ada jadwal latihan. Klik <strong>Generate Jadwal Gym</strong> di atas untuk membuat jadwal.
         </div>
       )}

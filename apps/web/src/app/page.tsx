@@ -1,41 +1,27 @@
+import { Activity, Dumbbell, Utensils, Wallet } from "lucide-react";
 import Link from "next/link";
+import { MotionScene } from "@/components/MotionScene";
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-8">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <span className="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-800">
-          FitBudget AI v2.0
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-          Perencanaan Gizi, Menu 7 Hari Sesuai Budget &amp; Jadwal Gym
-        </h1>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Semua perhitungan energi (Mifflin–St Jeor), target protein, optimasi menu 7 hari berbasis{" "}
-          <strong>batas budget harian (OR-Tools CP-SAT)</strong>, dan penjadwalan latihan dihitung secara
-          deterministik oleh backend dan dapat diverifikasi tanpa AI.
-        </p>
-        <div className="flex flex-wrap gap-3 pt-2">
-          <Link
-            href="/register"
-            className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            Mulai Sekarang (Daftar)
-          </Link>
-          <Link
-            href="/login"
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100"
-          >
-            Masuk ke Akun
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
-          >
-            Buka Dashboard
-          </Link>
+    <div className="landing">
+      <section className="landing-hero">
+        <MotionScene />
+        <div className="hero-copy">
+          <span className="hero-kicker"><Activity size={16} /> FITBUDGET AI</span>
+          <h1>Makan terencana.<br />Latihan teratur.</h1>
+          <p>Susun menu sesuai anggaran, atur jadwal latihan, dan ikuti progres Anda dalam satu tempat.</p>
+          <div className="landing-actions">
+            <Link href="/register" className="action-primary">Buat akun</Link>
+            <Link href="/dashboard" className="action-secondary">Buka dashboard</Link>
+          </div>
         </div>
-      </div>
+      </section>
+      <section className="landing-features" aria-label="Fitur FitBudget">
+        <div className="panel"><span className="quick-icon"><Utensils size={19} /></span><h2>Menu 7 hari</h2><p>Rencanakan porsi berdasarkan target nutrisi.</p></div>
+        <div className="panel"><span className="quick-icon"><Wallet size={19} /></span><h2>Anggaran harian</h2><p>Bandingkan biaya menu dengan anggaran Anda.</p></div>
+        <div className="panel"><span className="quick-icon"><Dumbbell size={19} /></span><h2>Jadwal latihan</h2><p>Susun sesi sesuai hari, peralatan, dan jeda pemulihan.</p></div>
+      </section>
     </div>
   );
 }

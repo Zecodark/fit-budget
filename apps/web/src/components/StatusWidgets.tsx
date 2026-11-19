@@ -19,7 +19,7 @@ export function StatusBadge({ status }: { status: "FEASIBLE" | "PARTIAL" | "INFE
     return (
       <span
         data-testid="status-badge"
-        className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900 border border-emerald-300"
+        className="inline-flex items-center gap-1 rounded-full bg-positive-soft px-3 py-1 text-xs font-semibold text-positive border border-positive-line"
       >
         <span aria-hidden="true">✓</span> FEASIBLE (Sesuai Target & Budget)
       </span>
@@ -29,7 +29,7 @@ export function StatusBadge({ status }: { status: "FEASIBLE" | "PARTIAL" | "INFE
     return (
       <span
         data-testid="status-badge"
-        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 border border-amber-300"
+        className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-3 py-1 text-xs font-semibold text-warning border border-warning-line"
       >
         <span aria-hidden="true">⚠</span> PARTIAL (Sebagian Target Belum Tercapai)
       </span>
@@ -38,7 +38,7 @@ export function StatusBadge({ status }: { status: "FEASIBLE" | "PARTIAL" | "INFE
   return (
     <span
       data-testid="status-badge"
-      className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-900 border border-rose-300"
+      className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-3 py-1 text-xs font-semibold text-danger border border-danger-line"
     >
       <span aria-hidden="true">✕</span> INFEASIBLE (Belum Memenuhi Target)
     </span>
@@ -74,7 +74,7 @@ export function MealPlanStatusPanel({
       <div
         role="status"
         data-testid="plan-status-panel"
-        className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-950"
+        className="rounded-lg border border-positive-line bg-positive-soft p-4 text-sm text-positive"
       >
         <div className="font-semibold">✓ Rencana memenuhi seluruh kendala budget, energi, protein, dan variasi.</div>
       </div>
@@ -86,7 +86,7 @@ export function MealPlanStatusPanel({
       <div
         role="alert"
         data-testid="plan-status-panel"
-        className="rounded-lg border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950 space-y-2"
+        className="rounded-lg border border-warning-line bg-warning-soft p-4 text-sm text-warning space-y-2"
       >
         <div className="font-semibold">
           ⚠ Status PARTIAL — Sebagian target gizi atau komposisi belum tercapai dalam batas budget ini:
@@ -108,7 +108,7 @@ export function MealPlanStatusPanel({
     <div
       role="alert"
       data-testid="plan-status-panel"
-      className="rounded-lg border border-rose-400 bg-rose-50 p-4 text-sm text-rose-950 space-y-3"
+      className="rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger space-y-3"
     >
       <div className="font-semibold">
         ✕ Status INFEASIBLE — Rencana belum memenuhi target gizi pada batas budget saat ini.
@@ -156,18 +156,18 @@ export function ErrorBanner({
   return (
     <div
       role="alert"
-      className="rounded-lg border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 flex flex-wrap items-center justify-between gap-2"
+      className="rounded-lg border border-danger-line bg-danger-soft p-4 text-sm text-danger flex flex-wrap items-center justify-between gap-2"
     >
       <div>
         <span className="font-semibold">✕ Kesalahan: </span>
         <span>{message}</span>
-        {requestId ? <span className="ml-2 text-xs text-rose-700">(ID: {requestId})</span> : null}
+        {requestId ? <span className="ml-2 text-xs text-danger">(ID: {requestId})</span> : null}
       </div>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="rounded bg-rose-700 px-3 py-1 text-xs font-medium text-white hover:bg-rose-800"
+          className="rounded bg-danger-action px-3 py-1 text-xs font-medium text-white hover:bg-danger-hover"
         >
           Coba Lagi
         </button>
@@ -181,7 +181,7 @@ export function ConsultBlockBanner({ message }: { message?: string }) {
     <div
       role="alert"
       data-testid="consult-block-banner"
-      className="rounded-lg border-2 border-amber-500 bg-amber-50 p-5 text-sm text-amber-950 space-y-2"
+      className="rounded-lg border-2 border-warning-line bg-warning-soft p-5 text-sm text-warning space-y-2"
     >
       <div className="text-base font-bold">⚠ Konsultasi Tenaga Kesehatan Profesional Diperlukan</div>
       <p>
@@ -224,15 +224,15 @@ export function ProposalCard({
   return (
     <div
       data-testid="proposal-card"
-      className="rounded-lg border border-indigo-300 bg-indigo-50/70 p-4 text-sm text-slate-900 space-y-2"
+      className="rounded-lg border border-accent-line bg-accent-soft/70 p-4 text-sm text-content space-y-2"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-semibold text-indigo-950">Usulan Perubahan: {typeLabel}</span>
-        <span className="rounded bg-indigo-200 px-2 py-0.5 text-xs font-medium text-indigo-900">
+        <span className="font-semibold text-accent-ink">Usulan Perubahan: {typeLabel}</span>
+        <span className="rounded bg-accent-wash px-2 py-0.5 text-xs font-medium text-accent-ink">
           Status: {proposal.status}
         </span>
       </div>
-      <div className="text-xs text-slate-700 space-y-1">
+      <div className="text-xs text-secondary space-y-1">
         {proposal.type === "change_budget" ? (
           <p>
             Budget baru: <strong>{formatIdr(proposal.params.daily_budget_idr)}</strong> — Pratinjau status:{" "}
@@ -262,7 +262,7 @@ export function ProposalCard({
             disabled={busy}
             onClick={() => onConfirm(proposal)}
             data-testid="proposal-confirm-btn"
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-accent-action px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >
             Konfirmasi & Terapkan
           </button>
@@ -271,7 +271,7 @@ export function ProposalCard({
             disabled={busy}
             onClick={() => onReject(proposal)}
             data-testid="proposal-reject-btn"
-            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            className="rounded border border-line-strong bg-panel px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-raised disabled:opacity-50"
           >
             Tolak
           </button>

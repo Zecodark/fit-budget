@@ -41,6 +41,8 @@ FitBudget AI membantu pengguna di Indonesia merencanakan menu mingguan bergizi s
 
 ## Cara Menjalankan Secara Lokal
 
+Untuk PostgreSQL yang dihosting di Supabase, lihat [panduan koneksi Supabase](supabase/README.md).
+
 ### 1. Menggunakan Docker Compose (Direkomendasikan)
 ```bash
 cp .env.example .env

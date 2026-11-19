@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureBanner } from "@/components/FeatureBanner";
+
 import React, { useEffect, useRef, useState } from "react";
 import {
   ConsultBlockBanner,
@@ -155,21 +157,17 @@ export default function MealPlanPage() {
   const activeDay = displayPlan?.days?.[selectedDayIdx] || displayPlan?.days?.[0];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+    <div className="space-y-5">
+      <FeatureBanner kind="meals" title="Menu 7 hari">Susun porsi bahan pangan lokal sesuai target nutrisi dan anggaran harian Anda.</FeatureBanner>
+      <div className="rounded-xl border border-line bg-panel p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Optimasi Menu 7 Hari (CP-SAT)</h1>
-            <p className="text-xs text-slate-600">
-              Menyusun porsi gram bahan mentah lokal (berat bersih/edible) dalam batas budget harian.
-            </p>
-          </div>
+          <h2 className="text-base font-semibold">Atur rencana</h2>
           {plan ? <StatusBadge status={plan.result_status} /> : null}
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label htmlFor="mp-start" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="mp-start" className="block text-xs font-semibold text-secondary mb-1">
               Tanggal Mulai
             </label>
             <input
@@ -177,11 +175,11 @@ export default function MealPlanPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm"
+              className="rounded border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="mp-budget" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="mp-budget" className="block text-xs font-semibold text-secondary mb-1">
               Budget Harian (Rp)
             </label>
             <input
@@ -192,7 +190,7 @@ export default function MealPlanPage() {
               step={1000}
               value={budgetIdr}
               onChange={(e) => setBudgetIdr(Number(e.target.value))}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm w-36"
+              className="rounded border border-line-strong px-3 py-1.5 text-sm w-36"
             />
           </div>
           <button
@@ -200,7 +198,7 @@ export default function MealPlanPage() {
             disabled={generating || consultBlocked}
             onClick={handleGenerate}
             data-testid="generate-meal-btn"
-            className="rounded bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-accent-action px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {generating ? "Menyusun Menu..." : "Generate Menu 7 Hari"}
           </button>
@@ -208,7 +206,7 @@ export default function MealPlanPage() {
             <button
               type="button"
               onClick={() => abortRef.current?.abort()}
-              className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800"
+              className="rounded border border-danger-line bg-danger-soft px-3 py-2 text-xs font-semibold text-danger"
             >
               Batal
             </button>
@@ -218,7 +216,7 @@ export default function MealPlanPage() {
               type="button"
               onClick={handleConfirm}
               data-testid="confirm-meal-btn"
-              className="rounded bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+              className="rounded bg-positive-action px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
             >
               Konfirmasi &amp; Kunci Rencana (v{plan.version})
             </button>
@@ -237,7 +235,7 @@ export default function MealPlanPage() {
             minimumBudgetRequiredIdr={infeasibleDetails.minimum_budget_required_idr}
             suggestions={infeasibleDetails.suggestions || []}
           />
-          <div className="rounded-lg border border-rose-300 bg-rose-100/70 px-4 py-2 text-xs font-semibold text-rose-950">
+          <div className="rounded-lg border border-danger-line bg-danger-soft/70 px-4 py-2 text-xs font-semibold text-danger">
             Menampilkan alternatif pendekatan terbaik (best effort) — <strong>belum memenuhi target</strong> dan tidak
             disimpan sebagai rencana terkonfirmasi.
           </div>
@@ -250,18 +248,18 @@ export default function MealPlanPage() {
       ) : null}
 
       {loading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+        <div className="rounded-xl border border-line bg-panel p-6 text-sm text-muted">
           Memuat rencana menu...
         </div>
       ) : displayPlan ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+        <div className="rounded-xl border border-line bg-panel p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
             <div className="flex gap-2 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setActiveTab("menu")}
                 className={`rounded px-3 py-1.5 ${
-                  activeTab === "menu" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                  activeTab === "menu" ? "bg-accent-action text-white" : "bg-raised text-secondary"
                 }`}
               >
                 Rincian 7 Hari
@@ -270,7 +268,7 @@ export default function MealPlanPage() {
                 type="button"
                 onClick={() => setActiveTab("shopping")}
                 className={`rounded px-3 py-1.5 ${
-                  activeTab === "shopping" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                  activeTab === "shopping" ? "bg-accent-action text-white" : "bg-raised text-secondary"
                 }`}
               >
                 Daftar Belanja ({displayPlan.shopping_list?.length || 0})
@@ -279,13 +277,13 @@ export default function MealPlanPage() {
                 type="button"
                 onClick={() => setActiveTab("versions")}
                 className={`rounded px-3 py-1.5 ${
-                  activeTab === "versions" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                  activeTab === "versions" ? "bg-accent-action text-white" : "bg-raised text-secondary"
                 }`}
               >
                 Riwayat Versi ({plansHistory.length})
               </button>
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-muted">
               Total proporsional 7 hari: <strong>{formatIdr(displayPlan.week_totals?.cost_idr)}</strong> • Rata-rata{" "}
               <strong>{formatDec1(displayPlan.week_totals?.avg_energy_kcal)} kkal</strong> &amp;{" "}
               <strong>{formatDec1(displayPlan.week_totals?.avg_protein_g)} g protein</strong>
@@ -302,8 +300,8 @@ export default function MealPlanPage() {
                     onClick={() => setSelectedDayIdx(idx)}
                     className={`rounded px-3 py-1.5 text-xs font-medium border ${
                       idx === selectedDayIdx
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-900"
-                        : "border-slate-200 bg-white text-slate-700"
+                        ? "border-accent-line bg-accent-soft text-accent-ink"
+                        : "border-line bg-panel text-secondary"
                     }`}
                   >
                     Hari {idx + 1} ({d.date.slice(5)}) — {d.day_status}
@@ -311,7 +309,7 @@ export default function MealPlanPage() {
                 ))}
               </div>
 
-              <div className="rounded-lg bg-slate-50 p-3 text-xs flex flex-wrap items-center justify-between gap-2 border border-slate-200">
+              <div className="rounded-lg bg-inset p-3 text-xs flex flex-wrap items-center justify-between gap-2 border border-line">
                 <div>
                   Biaya hari ini: <strong>{formatIdr(activeDay.totals.cost_idr)}</strong> /{" "}
                   {formatIdr(displayPlan.budget_limit_idr)}
@@ -327,22 +325,22 @@ export default function MealPlanPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeDay.slots.map((slot: any) => (
-                  <div key={slot.slot} className="rounded-lg border border-slate-200 p-3 space-y-2">
-                    <div className="text-xs font-bold uppercase tracking-wide text-indigo-800">
+                  <div key={slot.slot} className="rounded-lg border border-line p-3 space-y-2">
+                    <div className="text-xs font-bold uppercase tracking-wide text-accent-ink">
                       {SLOT_LABELS_ID[slot.slot] || slot.slot}
                     </div>
                     {slot.items.length === 0 ? (
-                      <div className="text-xs text-slate-400">Tidak ada item pada waktu makan ini.</div>
+                      <div className="text-xs text-muted">Tidak ada item pada waktu makan ini.</div>
                     ) : (
                       <ul className="space-y-2 text-xs">
                         {slot.items.map((it: any) => (
                           <li
                             key={it.id || `${slot.slot}-${it.food_id}`}
-                            className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5"
+                            className="flex items-center justify-between gap-2 border-b border-line pb-1.5"
                           >
                             <div>
-                              <div className="font-semibold text-slate-800">{it.food_name}</div>
-                              <div className="text-[11px] text-slate-500">
+                              <div className="font-semibold text-secondary">{it.food_name}</div>
+                              <div className="text-[11px] text-muted">
                                 {it.grams} g bersih • {formatDec1(it.energy_kcal)} kkal • {formatDec1(it.protein_g)} g
                                 protein • {formatIdr(it.cost_idr)}
                               </div>
@@ -353,7 +351,7 @@ export default function MealPlanPage() {
                                   type="button"
                                   aria-label={`Tambah 10g ${it.food_name}`}
                                   onClick={() => handleAdjustGrams(it.id, it.grams + 10)}
-                                  className="rounded border border-slate-300 px-1.5 py-0.5 text-[11px] hover:bg-slate-100"
+                                  className="rounded border border-line-strong px-1.5 py-0.5 text-[11px] hover:bg-raised"
                                 >
                                   +10g
                                 </button>
@@ -361,7 +359,7 @@ export default function MealPlanPage() {
                                   type="button"
                                   aria-label={`Hapus ${it.food_name}`}
                                   onClick={() => handleRemoveItem(it.id)}
-                                  className="rounded border border-rose-200 px-1.5 py-0.5 text-[11px] text-rose-700 hover:bg-rose-50"
+                                  className="rounded border border-danger-line px-1.5 py-0.5 text-[11px] text-danger hover:bg-danger-soft"
                                 >
                                   Hapus
                                 </button>
@@ -379,13 +377,13 @@ export default function MealPlanPage() {
 
           {activeTab === "shopping" ? (
             <div className="overflow-x-auto">
-              <p className="text-xs text-slate-600 mb-3">
+              <p className="text-xs text-muted mb-3">
                 Daftar belanja dihitung per kemasan penuh (memperhitungkan persentase bagian dapat dimakan / edible)
                 dan ditampilkan terpisah dari biaya harian proporsional.
               </p>
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
+                  <tr className="border-b border-line text-muted">
                     <th className="py-2 pr-3">Bahan Pangan</th>
                     <th className="py-2 pr-3">Total Bersih (7 hari)</th>
                     <th className="py-2 pr-3">Ukuran Kemasan</th>
@@ -395,7 +393,7 @@ export default function MealPlanPage() {
                 </thead>
                 <tbody>
                   {(displayPlan.shopping_list || []).map((sh: any) => (
-                    <tr key={sh.food_id} className="border-b border-slate-100">
+                    <tr key={sh.food_id} className="border-b border-line">
                       <td className="py-2 pr-3 font-medium">{sh.name}</td>
                       <td className="py-2 pr-3">{formatInt(sh.total_edible_g)} g</td>
                       <td className="py-2 pr-3">{formatInt(sh.package_g)} g</td>
@@ -413,7 +411,7 @@ export default function MealPlanPage() {
               {plansHistory.map((p) => (
                 <li
                   key={p.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-slate-200 p-2.5"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-line p-2.5"
                 >
                   <div>
                     <strong>Versi {p.version}</strong> ({p.status}) — {p.result_status} • Mulai {p.start_date} • Budget{" "}
@@ -427,7 +425,7 @@ export default function MealPlanPage() {
                       setPlan(d);
                       setActiveTab("menu");
                     }}
-                    className="rounded border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-indigo-800"
+                    className="rounded border border-accent-line bg-accent-soft px-2.5 py-1 text-accent-ink"
                   >
                     Buka Versi Ini
                   </button>
@@ -437,7 +435,7 @@ export default function MealPlanPage() {
           ) : null}
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+        <div className="rounded-xl border border-line bg-panel p-6 text-sm text-muted">
           Belum ada rencana menu 7 hari. Klik tombol <strong>Generate Menu 7 Hari</strong> di atas untuk membuat rencana.
         </div>
       )}

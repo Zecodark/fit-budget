@@ -66,19 +66,19 @@ export default function AdminExercisesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin — Katalog Gerakan Latihan</h1>
-          <p className="text-sm text-slate-600">Kelola daftar gerakan latihan, pola gerak, dan kontraindikasi cedera.</p>
+          <h1 className="text-2xl font-bold text-content">Katalog latihan</h1>
+          <p className="text-sm text-muted">Kelola daftar gerakan latihan, pola gerak, dan kontraindikasi cedera.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
-          <Link href="/admin/foods" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/foods" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Pangan
           </Link>
-          <Link href="/admin/prices" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/prices" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Harga Pangan
           </Link>
-          <Link href="/admin/audit" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/audit" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Log Audit
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default function AdminExercisesPage() {
 
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
       {banner ? (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive">
           ✓ {banner}
         </div>
       ) : null}
@@ -94,11 +94,11 @@ export default function AdminExercisesPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form
           onSubmit={handleCreate}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3"
+          className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3"
         >
-          <h2 className="text-base font-bold text-slate-900">Tambah Gerakan Baru</h2>
+          <h2 className="text-base font-bold text-content">Tambah Gerakan Baru</h2>
           <div>
-            <label htmlFor="ex-code" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-code" className="block text-xs font-semibold text-secondary">
               Kode Unik (UPPER_SNAKE)
             </label>
             <input
@@ -108,11 +108,11 @@ export default function AdminExercisesPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Contoh: HAMMER_CURL_DB"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="ex-name" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-name" className="block text-xs font-semibold text-secondary">
               Nama Gerakan
             </label>
             <input
@@ -122,18 +122,18 @@ export default function AdminExercisesPage() {
               value={nameId}
               onChange={(e) => setNameId(e.target.value)}
               placeholder="Contoh: Dumbbell Hammer Curl"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="ex-pat" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-pat" className="block text-xs font-semibold text-secondary">
               Pola Gerakan
             </label>
             <select
               id="ex-pat"
               value={pattern}
               onChange={(e) => setPattern(e.target.value as any)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             >
               <option value="squat">Squat</option>
               <option value="hinge">Hinge</option>
@@ -146,7 +146,7 @@ export default function AdminExercisesPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="ex-muscle" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-muscle" className="block text-xs font-semibold text-secondary">
               Otot Utama
             </label>
             <input
@@ -155,18 +155,18 @@ export default function AdminExercisesPage() {
               required
               value={primaryMuscle}
               onChange={(e) => setPrimaryMuscle(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="ex-eq" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-eq" className="block text-xs font-semibold text-secondary">
               Peralatan
             </label>
             <select
               id="ex-eq"
               value={equipment}
               onChange={(e) => setEquipment(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             >
               <option value="bodyweight">Tanpa Alat (bodyweight)</option>
               <option value="dumbbell">Dumbbell</option>
@@ -176,7 +176,7 @@ export default function AdminExercisesPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="ex-inst" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-inst" className="block text-xs font-semibold text-secondary">
               Instruksi Aman (min. 10 karakter)
             </label>
             <textarea
@@ -186,11 +186,11 @@ export default function AdminExercisesPage() {
               minLength={10}
               value={instructionsId}
               onChange={(e) => setInstructionsId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-xs"
             />
           </div>
           <div>
-            <label htmlFor="ex-reason" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="ex-reason" className="block text-xs font-semibold text-secondary">
               Alasan Audit (wajib)
             </label>
             <input
@@ -199,22 +199,22 @@ export default function AdminExercisesPage() {
               required
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+            className="w-full rounded-lg bg-positive-hover px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
           >
             Simpan Gerakan
           </button>
         </form>
 
-        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm overflow-x-auto">
-          <h2 className="text-base font-bold text-slate-900 mb-3">Daftar Katalog Latihan ({exercises.length})</h2>
+        <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm overflow-x-auto">
+          <h2 className="text-base font-bold text-content mb-3">Daftar Katalog Latihan ({exercises.length})</h2>
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-600">
+              <tr className="border-b border-line text-muted">
                 <th className="py-2">Kode</th>
                 <th className="py-2">Nama</th>
                 <th className="py-2">Pola</th>
@@ -223,7 +223,7 @@ export default function AdminExercisesPage() {
                 <th className="py-2">Kontraindikasi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {exercises.map((ex) => (
                 <tr key={ex.id}>
                   <td className="py-2 font-mono">{ex.code}</td>
@@ -231,7 +231,7 @@ export default function AdminExercisesPage() {
                   <td className="py-2">{ex.movement_pattern}</td>
                   <td className="py-2">{ex.primary_muscle}</td>
                   <td className="py-2">{(ex.equipment_required || []).join(", ")}</td>
-                  <td className="py-2 text-rose-700">{(ex.contraindications || []).join(", ") || "-"}</td>
+                  <td className="py-2 text-danger">{(ex.contraindications || []).join(", ") || "-"}</td>
                 </tr>
               ))}
             </tbody>

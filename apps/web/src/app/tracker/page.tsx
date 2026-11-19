@@ -200,15 +200,15 @@ export default function TrackerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pencatatan Harian (Tracker)</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-content">Catatan progres</h1>
+          <p className="text-sm text-muted">
             Catat asupan makanan, sesi latihan, dan perkembangan berat badan Anda.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="tracker-date" className="text-xs font-semibold text-slate-700">
+          <label htmlFor="tracker-date" className="text-xs font-semibold text-secondary">
             Tanggal:
           </label>
           <input
@@ -216,7 +216,7 @@ export default function TrackerPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-line-strong px-3 py-1.5 text-sm"
           />
         </div>
       </div>
@@ -226,20 +226,20 @@ export default function TrackerPage() {
         <div
           role="status"
           data-testid="tracker-success-banner"
-          className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950"
+          className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive"
         >
           ✓ {banner}
         </div>
       ) : null}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 pb-2">
+      <div className="route-tabs gap-2 border-b border-line pb-2">
         <button
           type="button"
           onClick={() => setTab("food")}
           data-testid="tab-food"
           className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-            tab === "food" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            tab === "food" ? "bg-positive-hover text-white" : "bg-raised text-secondary hover:bg-line"
           }`}
         >
           Makanan
@@ -249,7 +249,7 @@ export default function TrackerPage() {
           onClick={() => setTab("workout")}
           data-testid="tab-workout"
           className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-            tab === "workout" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            tab === "workout" ? "bg-positive-hover text-white" : "bg-raised text-secondary hover:bg-line"
           }`}
         >
           Latihan
@@ -259,7 +259,7 @@ export default function TrackerPage() {
           onClick={() => setTab("weight")}
           data-testid="tab-weight"
           className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-            tab === "weight" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            tab === "weight" ? "bg-positive-hover text-white" : "bg-raised text-secondary hover:bg-line"
           }`}
         >
           Berat Badan
@@ -270,11 +270,11 @@ export default function TrackerPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <form
             onSubmit={handleAddFoodLog}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4"
+            className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4"
           >
-            <h2 className="text-base font-bold text-slate-900">Tambah Catatan Makanan</h2>
+            <h2 className="text-base font-bold text-content">Tambah Catatan Makanan</h2>
             <div>
-              <label htmlFor="food-search" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="food-search" className="block text-xs font-semibold text-secondary">
                 Cari Bahan Pangan
               </label>
               <input
@@ -283,19 +283,19 @@ export default function TrackerPage() {
                 value={foodSearch}
                 onChange={(e) => setFoodSearch(e.target.value)}
                 placeholder="Contoh: tempe, ayam, nasi..."
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="food-select" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="food-select" className="block text-xs font-semibold text-secondary">
                 Pilih Bahan Pangan
               </label>
               <select
                 id="food-select"
                 value={selectedFoodId}
                 onChange={(e) => setSelectedFoodId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               >
                 {foodsCatalog.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -307,14 +307,14 @@ export default function TrackerPage() {
             </div>
 
             <div>
-              <label htmlFor="meal-slot" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="meal-slot" className="block text-xs font-semibold text-secondary">
                 Waktu Makan
               </label>
               <select
                 id="meal-slot"
                 value={mealSlot}
                 onChange={(e) => setMealSlot(e.target.value as any)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               >
                 <option value="breakfast">Sarapan</option>
                 <option value="lunch">Makan Siang</option>
@@ -324,7 +324,7 @@ export default function TrackerPage() {
             </div>
 
             <div>
-              <label htmlFor="food-grams" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="food-grams" className="block text-xs font-semibold text-secondary">
                 Berat Porsi (gram)
               </label>
               <input
@@ -334,12 +334,12 @@ export default function TrackerPage() {
                 max={2000}
                 value={grams}
                 onChange={(e) => setGrams(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label htmlFor="actual-price" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="actual-price" className="block text-xs font-semibold text-secondary">
                 Harga Aktual Dibayar (Rp, opsional)
               </label>
               <input
@@ -349,24 +349,24 @@ export default function TrackerPage() {
                 value={actualPriceIdr}
                 onChange={(e) => setActualPriceIdr(e.target.value)}
                 placeholder="Kosongkan untuk gunakan harga katalog"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               />
             </div>
 
             <button
               type="submit"
               data-testid="submit-food-log"
-              className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="w-full rounded-lg bg-positive-hover px-4 py-2.5 text-sm font-semibold text-white hover:bg-positive-hover"
             >
               Simpan Catatan Makanan
             </button>
           </form>
 
-          <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-bold text-slate-900">Daftar Asupan ({selectedDate})</h2>
+              <h2 className="text-base font-bold text-content">Daftar Asupan ({selectedDate})</h2>
               {dayTotals ? (
-                <div className="text-xs font-semibold text-slate-700" data-testid="food-day-totals">
+                <div className="text-xs font-semibold text-secondary" data-testid="food-day-totals">
                   Total: {formatInt(dayTotals.energy_kcal)} kkal • {formatDec1(dayTotals.protein_g)} g protein •{" "}
                   {formatIdr(dayTotals.cost_idr)}
                 </div>
@@ -374,12 +374,12 @@ export default function TrackerPage() {
             </div>
 
             {foodLogs.length === 0 ? (
-              <p className="text-sm text-slate-500">Belum ada makanan yang dicatat pada tanggal ini.</p>
+              <p className="text-sm text-muted">Belum ada makanan yang dicatat pada tanggal ini.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-600">
+                    <tr className="border-b border-line text-muted">
                       <th className="py-2">Waktu</th>
                       <th className="py-2">Pangan</th>
                       <th className="py-2">Gram</th>
@@ -389,7 +389,7 @@ export default function TrackerPage() {
                       <th className="py-2">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-line">
                     {foodLogs.map((fl) => (
                       <tr key={fl.id}>
                         <td className="py-2 capitalize">{fl.meal_slot}</td>
@@ -402,7 +402,7 @@ export default function TrackerPage() {
                           <button
                             type="button"
                             onClick={() => handleDeleteFoodLog(fl.id)}
-                            className="text-rose-700 hover:underline text-xs font-medium"
+                            className="text-danger hover:underline text-xs font-medium"
                           >
                             Hapus
                           </button>
@@ -421,11 +421,11 @@ export default function TrackerPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <form
             onSubmit={handleAddWorkoutLog}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4"
+            className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4"
           >
-            <h2 className="text-base font-bold text-slate-900">Catat Sesi Latihan</h2>
+            <h2 className="text-base font-bold text-content">Catat Sesi Latihan</h2>
 
-            <label className="flex items-center gap-2 text-sm text-slate-800">
+            <label className="flex items-center gap-2 text-sm text-secondary">
               <input
                 type="checkbox"
                 checked={workoutCompleted}
@@ -435,14 +435,14 @@ export default function TrackerPage() {
             </label>
 
             <div>
-              <label htmlFor="effort-select" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="effort-select" className="block text-xs font-semibold text-secondary">
                 Tingkat Kesulitan (Effort Rating)
               </label>
               <select
                 id="effort-select"
                 value={effortRating}
                 onChange={(e) => setEffortRating(e.target.value as any)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               >
                 <option value="easy">Mudah (Easy)</option>
                 <option value="normal">Pas / Normal</option>
@@ -451,14 +451,14 @@ export default function TrackerPage() {
             </div>
 
             <div>
-              <label htmlFor="exercise-select" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="exercise-select" className="block text-xs font-semibold text-secondary">
                 Gerakan Utama
               </label>
               <select
                 id="exercise-select"
                 value={selectedExerciseId}
                 onChange={(e) => setSelectedExerciseId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               >
                 {exercisesCatalog.map((ex) => (
                   <option key={ex.id} value={ex.id}>
@@ -470,7 +470,7 @@ export default function TrackerPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="set-reps" className="block text-xs font-semibold text-slate-700">
+                <label htmlFor="set-reps" className="block text-xs font-semibold text-secondary">
                   Repetisi
                 </label>
                 <input
@@ -480,11 +480,11 @@ export default function TrackerPage() {
                   max={100}
                   value={setReps}
                   onChange={(e) => setSetReps(Number(e.target.value))}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label htmlFor="set-load" className="block text-xs font-semibold text-slate-700">
+                <label htmlFor="set-load" className="block text-xs font-semibold text-secondary">
                   Beban (kg)
                 </label>
                 <input
@@ -494,7 +494,7 @@ export default function TrackerPage() {
                   step="0.5"
                   value={setLoadKg}
                   onChange={(e) => setSetLoadKg(Number(e.target.value))}
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -502,25 +502,25 @@ export default function TrackerPage() {
             <button
               type="submit"
               data-testid="submit-workout-log"
-              className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="w-full rounded-lg bg-positive-hover px-4 py-2.5 text-sm font-semibold text-white hover:bg-positive-hover"
             >
               Simpan Catatan Latihan
             </button>
           </form>
 
-          <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-slate-900">Riwayat Latihan ({selectedDate})</h2>
+          <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4">
+            <h2 className="text-base font-bold text-content">Riwayat Latihan ({selectedDate})</h2>
             {progressionHint ? (
-              <div className="rounded-lg border border-sky-300 bg-sky-50 p-3 text-xs text-sky-950">
+              <div className="rounded-lg border border-info-line bg-info-soft p-3 text-xs text-info">
                 <strong>Saran Progresi:</strong> {progressionHint}
               </div>
             ) : null}
             {workoutLogs.length === 0 ? (
-              <p className="text-sm text-slate-500">Belum ada catatan latihan pada tanggal ini.</p>
+              <p className="text-sm text-muted">Belum ada catatan latihan pada tanggal ini.</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {workoutLogs.map((wl) => (
-                  <li key={wl.id} className="rounded-lg border border-slate-200 p-3">
+                  <li key={wl.id} className="rounded-lg border border-line p-3">
                     <div className="font-semibold">
                       {wl.logged_date} — {wl.completed ? "✓ Selesai" : "Belum Selesai"} (Effort:{" "}
                       {wl.effort_rating || "-"})
@@ -537,11 +537,11 @@ export default function TrackerPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <form
             onSubmit={handleAddWeightLog}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4"
+            className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4"
           >
-            <h2 className="text-base font-bold text-slate-900">Catat Berat Badan</h2>
+            <h2 className="text-base font-bold text-content">Catat Berat Badan</h2>
             <div>
-              <label htmlFor="weight-input" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="weight-input" className="block text-xs font-semibold text-secondary">
                 Berat Badan (kg)
               </label>
               <input
@@ -552,11 +552,11 @@ export default function TrackerPage() {
                 max={250}
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
               />
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-slate-700">
+            <label className="flex items-center gap-2 text-xs text-secondary">
               <input
                 type="checkbox"
                 checked={applyToProfile}
@@ -568,25 +568,25 @@ export default function TrackerPage() {
             <button
               type="submit"
               data-testid="submit-weight-log"
-              className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="w-full rounded-lg bg-positive-hover px-4 py-2.5 text-sm font-semibold text-white hover:bg-positive-hover"
             >
               Simpan Berat Badan
             </button>
           </form>
 
-          <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-slate-900">Riwayat Berat Badan</h2>
+          <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4">
+            <h2 className="text-base font-bold text-content">Riwayat Berat Badan</h2>
             {weightLogs.length === 0 ? (
-              <p className="text-sm text-slate-500">Belum ada catatan berat badan.</p>
+              <p className="text-sm text-muted">Belum ada catatan berat badan.</p>
             ) : (
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-600">
+                  <tr className="border-b border-line text-muted">
                     <th className="py-2">Tanggal</th>
                     <th className="py-2">Berat Badan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line">
                   {weightLogs.map((w) => (
                     <tr key={w.id}>
                       <td className="py-2">{w.logged_date}</td>

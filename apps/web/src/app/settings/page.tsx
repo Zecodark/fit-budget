@@ -107,31 +107,31 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Pengaturan Akun & Privasi (UU PDP)</h1>
-        <p className="text-sm text-slate-600">
+      <div className="route-intro">
+        <h1 className="text-2xl font-bold text-content">Akun & privasi</h1>
+        <p className="text-sm text-muted">
           Kelola persetujuan pemrosesan data, unduh salinan data Anda, ubah kata sandi, atau hapus akun secara permanen.
         </p>
       </div>
 
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
       {banner ? (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive">
           ✓ {banner}
         </div>
       ) : null}
 
       {/* Consent management */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-        <h2 className="text-base font-bold text-slate-900">Persetujuan Pemrosesan Data</h2>
-        <p className="text-xs text-slate-600">
+      <section className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3">
+        <h2 className="text-base font-bold text-content">Persetujuan Pemrosesan Data</h2>
+        <p className="text-xs text-muted">
           Sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP), nama dan alamat email Anda tidak pernah
           dikirim ke penyedia AI eksternal.
         </p>
-        <label className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3 text-sm">
+        <label className="flex items-center justify-between gap-4 rounded-lg border border-line p-3 text-sm">
           <div>
-            <div className="font-semibold text-slate-900">Persetujuan AI Cloud (`ai_cloud`)</div>
-            <div className="text-xs text-slate-600">
+            <div className="font-semibold text-content">Persetujuan AI Cloud (`ai_cloud`)</div>
+            <div className="text-xs text-muted">
               Izinkan pengiriman ringkasan target gizi dan rencana makan anonim ke penyedia AI cloud jika diaktifkan.
             </div>
           </div>
@@ -145,9 +145,9 @@ export default function SettingsPage() {
       </section>
 
       {/* Data portability export */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-        <h2 className="text-base font-bold text-slate-900">Ekspor Data Pribadi (Portabilitas Data)</h2>
-        <p className="text-xs text-slate-600">
+      <section className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3">
+        <h2 className="text-base font-bold text-content">Ekspor Data Pribadi (Portabilitas Data)</h2>
+        <p className="text-xs text-muted">
           Unduh seluruh profil, riwayat persetujuan, rencana makan, jadwal latihan, catatan harian, dan riwayat chat
           dalam format JSON.
         </p>
@@ -155,7 +155,7 @@ export default function SettingsPage() {
           type="button"
           onClick={handleExportData}
           data-testid="export-account-btn"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+          className="rounded-lg bg-inset px-4 py-2 text-xs font-semibold text-white hover:bg-raised"
         >
           Unduh Data Saya (.json)
         </button>
@@ -164,12 +164,12 @@ export default function SettingsPage() {
       {/* Change password */}
       <form
         onSubmit={handleChangePassword}
-        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4"
+        className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-4"
       >
-        <h2 className="text-base font-bold text-slate-900">Ubah Kata Sandi</h2>
+        <h2 className="text-base font-bold text-content">Ubah Kata Sandi</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="current-pw" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="current-pw" className="block text-xs font-semibold text-secondary">
               Kata Sandi Saat Ini
             </label>
             <input
@@ -178,11 +178,11 @@ export default function SettingsPage() {
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="new-pw" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="new-pw" className="block text-xs font-semibold text-secondary">
               Kata Sandi Baru (min. 8 karakter)
             </label>
             <input
@@ -192,13 +192,13 @@ export default function SettingsPage() {
               minLength={8}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm"
             />
           </div>
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+          className="rounded-lg bg-positive-hover px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
         >
           Simpan Kata Sandi Baru
         </button>
@@ -207,15 +207,15 @@ export default function SettingsPage() {
       {/* Delete account */}
       <form
         onSubmit={handleDeleteAccount}
-        className="rounded-xl border border-rose-300 bg-rose-50/50 p-5 shadow-sm space-y-3"
+        className="rounded-xl border border-danger-line bg-danger-soft/50 p-5 shadow-sm space-y-3"
       >
-        <h2 className="text-base font-bold text-rose-950">Hapus Akun & Seluruh Data Permanen</h2>
-        <p className="text-xs text-rose-900">
+        <h2 className="text-base font-bold text-danger">Hapus Akun & Seluruh Data Permanen</h2>
+        <p className="text-xs text-danger">
           Tindakan ini akan menghapus akun dan seluruh data Anda secara permanen dari basis data dan tidak dapat
           dibatalkan.
         </p>
         <div>
-          <label htmlFor="delete-pw" className="block text-xs font-semibold text-rose-950">
+          <label htmlFor="delete-pw" className="block text-xs font-semibold text-danger">
             Konfirmasi Kata Sandi Anda
           </label>
           <input
@@ -224,13 +224,13 @@ export default function SettingsPage() {
             required
             value={deletePassword}
             onChange={(e) => setDeletePassword(e.target.value)}
-            className="mt-1 w-full max-w-xs rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm"
+            className="mt-1 w-full max-w-xs rounded-lg border border-danger-line bg-panel px-3 py-2 text-sm"
           />
         </div>
         <button
           type="submit"
           data-testid="delete-account-btn"
-          className="rounded-lg bg-rose-700 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-800"
+          className="rounded-lg bg-danger-action px-4 py-2 text-xs font-semibold text-white hover:bg-danger-hover"
         >
           Hapus Akun Saya Secara Permanen
         </button>

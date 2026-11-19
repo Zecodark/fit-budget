@@ -119,10 +119,10 @@ export default function ChatPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Asisten FitBudget AI</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-content">Asisten FitBudget AI</h1>
+          <p className="text-sm text-muted">
             Penjelasan rencana makan & latihan serta usulan penyesuaian terstruktur. Semua angka dihitung oleh mesin
             deterministik.
           </p>
@@ -132,8 +132,8 @@ export default function ChatPage() {
             data-testid="ai-provider-badge"
             className={`rounded-full px-3 py-1 text-xs font-semibold border ${
               status.enabled
-                ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                : "border-amber-300 bg-amber-50 text-amber-900"
+                ? "border-positive-line bg-positive-soft text-positive"
+                : "border-warning-line bg-warning-soft text-warning"
             }`}
           >
             Provider: {status.provider} {status.enabled ? "(Aktif)" : "(Nonaktif)"}
@@ -145,7 +145,7 @@ export default function ChatPage() {
         <div
           role="alert"
           data-testid="ai-unavailable-banner"
-          className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950 space-y-2"
+          className="rounded-xl border border-warning-line bg-warning-soft p-4 text-sm text-warning space-y-2"
         >
           <div className="font-bold">⚠ Asisten AI Sedang Tidak Aktif (Mode Non-AI)</div>
           <p>
@@ -169,14 +169,14 @@ export default function ChatPage() {
       {status?.cloud_consent_required && !status?.cloud_consent_granted ? (
         <div
           role="alert"
-          className="rounded-xl border border-indigo-300 bg-indigo-50 p-4 text-sm text-indigo-950 flex flex-wrap items-center justify-between gap-2"
+          className="rounded-xl border border-accent-line bg-accent-soft p-4 text-sm text-accent-ink flex flex-wrap items-center justify-between gap-2"
         >
           <span>
             Penyedia AI cloud memerlukan persetujuan pengiriman konteks anonim. Aktifkan di Pengaturan Privasi.
           </span>
           <Link
             href="/settings"
-            className="rounded bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-800"
+            className="rounded bg-accent-hover px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-hover"
           >
             Buka Pengaturan
           </Link>
@@ -188,7 +188,7 @@ export default function ChatPage() {
         <div
           role="status"
           data-testid="chat-action-banner"
-          className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950"
+          className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive"
         >
           ✓ {actionBanner}
         </div>
@@ -197,10 +197,10 @@ export default function ChatPage() {
       {/* Message list */}
       <div
         data-testid="chat-messages-list"
-        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4 min-h-[320px] max-h-[540px] overflow-y-auto"
+        className="rounded-xl border border-line bg-panel p-4 shadow-sm space-y-4 min-h-[320px] max-h-[540px] overflow-y-auto"
       >
         {messages.length === 0 ? (
-          <div className="text-center py-12 text-sm text-slate-500 space-y-2">
+          <div className="text-center py-12 text-sm text-muted space-y-2">
             <p>Belum ada percakapan. Contoh pertanyaan yang dapat Anda ajukan:</p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               {[
@@ -213,7 +213,7 @@ export default function ChatPage() {
                   type="button"
                   disabled={aiDisabled}
                   onClick={() => setInput(q)}
-                  className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                  className="rounded-full border border-line-strong bg-inset px-3 py-1 text-xs text-secondary hover:bg-raised disabled:opacity-50"
                 >
                   {q}
                 </button>
@@ -229,8 +229,8 @@ export default function ChatPage() {
               <div
                 className={`max-w-2xl rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
                   m.role === "user"
-                    ? "bg-emerald-700 text-white"
-                    : "border border-slate-200 bg-slate-50 text-slate-900"
+                    ? "bg-positive-hover text-white"
+                    : "border border-line bg-inset text-content"
                 }`}
               >
                 <div className="text-[11px] font-semibold opacity-75 mb-1">
@@ -273,13 +273,13 @@ export default function ChatPage() {
               ? "Asisten AI sedang tidak aktif..."
               : "Tanyakan tentang rencana makan/latihan atau minta perubahan..."
           }
-          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm disabled:bg-slate-100"
+          className="flex-1 rounded-xl border border-line-strong bg-panel px-4 py-2.5 text-sm disabled:bg-raised"
         />
         <button
           type="submit"
           data-testid="chat-send-btn"
           disabled={aiDisabled || sending || !input.trim()}
-          className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+          className="rounded-xl bg-positive-hover px-5 py-2.5 text-sm font-semibold text-white hover:bg-positive-hover disabled:opacity-50"
         >
           {sending ? "Mengirim..." : "Kirim"}
         </button>

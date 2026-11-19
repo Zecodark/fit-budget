@@ -69,19 +69,19 @@ export default function AdminFoodsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin — Katalog Pangan</h1>
-          <p className="text-sm text-slate-600">Kelola data nutrisi bahan pangan per 100g bagian dapat dimakan.</p>
+          <h1 className="text-2xl font-bold text-content">Katalog pangan</h1>
+          <p className="text-sm text-muted">Kelola data nutrisi bahan pangan per 100g bagian dapat dimakan.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
-          <Link href="/admin/prices" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/prices" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Harga Pangan
           </Link>
-          <Link href="/admin/exercises" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/exercises" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Latihan
           </Link>
-          <Link href="/admin/audit" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/audit" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Log Audit
           </Link>
         </div>
@@ -89,7 +89,7 @@ export default function AdminFoodsPage() {
 
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
       {banner ? (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-positive-line bg-positive-soft p-3 text-sm text-positive">
           ✓ {banner}
         </div>
       ) : null}
@@ -97,11 +97,11 @@ export default function AdminFoodsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form
           onSubmit={handleCreate}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3"
+          className="rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3"
         >
-          <h2 className="text-base font-bold text-slate-900">Tambah Pangan Baru</h2>
+          <h2 className="text-base font-bold text-content">Tambah Pangan Baru</h2>
           <div>
-            <label htmlFor="food-code" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="food-code" className="block text-xs font-semibold text-secondary">
               Kode Unik (UPPER_SNAKE)
             </label>
             <input
@@ -111,11 +111,11 @@ export default function AdminFoodsPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Contoh: EDAMAME"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="food-name" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="food-name" className="block text-xs font-semibold text-secondary">
               Nama Pangan (Bahasa Indonesia)
             </label>
             <input
@@ -125,18 +125,18 @@ export default function AdminFoodsPage() {
               value={nameId}
               onChange={(e) => setNameId(e.target.value)}
               placeholder="Contoh: Edamame Rebus"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="food-cat" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="food-cat" className="block text-xs font-semibold text-secondary">
               Kategori
             </label>
             <select
               id="food-cat"
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             >
               <option value="carb">Karbohidrat (carb)</option>
               <option value="protein_animal">Protein Hewani (protein_animal)</option>
@@ -148,7 +148,7 @@ export default function AdminFoodsPage() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor="f-kcal" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="f-kcal" className="block text-xs font-semibold text-secondary">
                 Energi (kkal/100g)
               </label>
               <input
@@ -157,11 +157,11 @@ export default function AdminFoodsPage() {
                 required
                 value={kcal}
                 onChange={(e) => setKcal(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="f-prot" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="f-prot" className="block text-xs font-semibold text-secondary">
                 Protein (g/100g)
               </label>
               <input
@@ -171,11 +171,11 @@ export default function AdminFoodsPage() {
                 required
                 value={protein}
                 onChange={(e) => setProtein(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="f-carb" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="f-carb" className="block text-xs font-semibold text-secondary">
                 Karbo (g/100g)
               </label>
               <input
@@ -185,11 +185,11 @@ export default function AdminFoodsPage() {
                 required
                 value={carbs}
                 onChange={(e) => setCarbs(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="f-fat" className="block text-xs font-semibold text-slate-700">
+              <label htmlFor="f-fat" className="block text-xs font-semibold text-secondary">
                 Lemak (g/100g)
               </label>
               <input
@@ -199,12 +199,12 @@ export default function AdminFoodsPage() {
                 required
                 value={fat}
                 onChange={(e) => setFat(Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1 text-sm"
               />
             </div>
           </div>
           <div>
-            <label htmlFor="f-fiber" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="f-fiber" className="block text-xs font-semibold text-secondary">
               Serat (g/100g)
             </label>
             <input
@@ -214,11 +214,11 @@ export default function AdminFoodsPage() {
               required
               value={fiber}
               onChange={(e) => setFiber(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1 text-sm"
             />
           </div>
           <div>
-            <label htmlFor="f-reason" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="f-reason" className="block text-xs font-semibold text-secondary">
               Alasan Audit (wajib)
             </label>
             <input
@@ -228,22 +228,22 @@ export default function AdminFoodsPage() {
               minLength={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+            className="w-full rounded-lg bg-positive-hover px-4 py-2 text-xs font-semibold text-white hover:bg-positive-hover"
           >
             Simpan Bahan Pangan
           </button>
         </form>
 
-        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm overflow-x-auto">
-          <h2 className="text-base font-bold text-slate-900 mb-3">Daftar Katalog Pangan ({foods.length})</h2>
+        <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm overflow-x-auto">
+          <h2 className="text-base font-bold text-content mb-3">Daftar Katalog Pangan ({foods.length})</h2>
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-600">
+              <tr className="border-b border-line text-muted">
                 <th className="py-2">Kode</th>
                 <th className="py-2">Nama</th>
                 <th className="py-2">Kategori</th>
@@ -252,7 +252,7 @@ export default function AdminFoodsPage() {
                 <th className="py-2">Harga/100g</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {foods.map((f) => (
                 <tr key={f.id}>
                   <td className="py-2 font-mono">{f.code}</td>

@@ -173,10 +173,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+      <div className="route-intro rounded-xl border border-line bg-panel p-6 shadow-sm space-y-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Onboarding Profil &amp; Preferensi</h1>
-          <p className="text-xs text-slate-600 mt-1">
+          <h1 className="text-xl font-bold text-content">Profil & preferensi</h1>
+          <p className="text-xs text-muted mt-1">
             Lengkapi 5 langkah berikut untuk menghitung estimasi kebutuhan energi, protein, dan preferensi Anda.
           </p>
         </div>
@@ -189,8 +189,8 @@ export default function OnboardingPage() {
                 onClick={() => setStep(idx)}
                 className={`w-full rounded px-2 py-1.5 text-left font-medium border ${
                   step === idx
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-800"
-                    : "border-slate-200 bg-slate-50 text-slate-600"
+                    ? "border-accent-line bg-accent-soft text-accent-ink"
+                    : "border-line bg-inset text-muted"
                 }`}
               >
                 {title}
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={() => router.push("/nutrition")}
-              className="rounded bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+              className="rounded bg-accent-action px-4 py-2 text-xs font-semibold text-white"
             >
               Lihat Estimasi Nutrisi
             </button>
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
         {step === 0 ? (
           <div className="space-y-4">
             <h2 className="text-base font-semibold">Langkah 1: Persetujuan Pemrosesan Data</h2>
-            <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-700 leading-relaxed border border-slate-200">
+            <p className="rounded-lg bg-inset p-3 text-xs text-secondary leading-relaxed border border-line">
               {consentText ||
                 "FitBudget AI memproses data tubuh, preferensi makanan/latihan, dan catatan harian Anda untuk menghitung estimasi kebutuhan gizi dan menyusun rencana secara lokal. Aplikasi ini bukan layanan medis."}
             </p>
@@ -250,7 +250,7 @@ export default function OnboardingPage() {
         {step === 1 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="ob-age" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="ob-age" className="block text-xs font-semibold text-secondary mb-1">
                 Umur (18–80 tahun)
               </label>
               <input
@@ -260,25 +260,25 @@ export default function OnboardingPage() {
                 max={80}
                 value={ageYears}
                 onChange={(e) => setAgeYears(Number(e.target.value))}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-line-strong px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="ob-sex" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="ob-sex" className="block text-xs font-semibold text-secondary mb-1">
                 Jenis Kelamin Biologis (Rumus Mifflin–St Jeor)
               </label>
               <select
                 id="ob-sex"
                 value={sex}
                 onChange={(e) => setSex(e.target.value as "male" | "female")}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-line-strong px-3 py-2 text-sm"
               >
                 <option value="male">Laki-laki (male, s = +5)</option>
                 <option value="female">Perempuan (female, s = −161)</option>
               </select>
             </div>
             <div>
-              <label htmlFor="ob-weight" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="ob-weight" className="block text-xs font-semibold text-secondary mb-1">
                 Berat Badan (30–250 kg)
               </label>
               <input
@@ -289,11 +289,11 @@ export default function OnboardingPage() {
                 max={250}
                 value={weightKg}
                 onChange={(e) => setWeightKg(Number(e.target.value))}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-line-strong px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="ob-height" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="ob-height" className="block text-xs font-semibold text-secondary mb-1">
                 Tinggi Badan (120–230 cm)
               </label>
               <input
@@ -303,7 +303,7 @@ export default function OnboardingPage() {
                 max={230}
                 value={heightCm}
                 onChange={(e) => setHeightCm(Number(e.target.value))}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-line-strong px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -313,14 +313,14 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="ob-act" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="ob-act" className="block text-xs font-semibold text-secondary mb-1">
                   Tingkat Aktivitas
                 </label>
                 <select
                   id="ob-act"
                   value={activityLevel}
                   onChange={(e) => setActivityLevel(e.target.value as any)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm"
                 >
                   <option value="sedentary">Sedentary — Hampir tidak olahraga (1,2)</option>
                   <option value="light">Light — Olahraga ringan 1–3 hari/minggu (1,375)</option>
@@ -329,14 +329,14 @@ export default function OnboardingPage() {
                 </select>
               </div>
               <div>
-                <label htmlFor="ob-goal" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="ob-goal" className="block text-xs font-semibold text-secondary mb-1">
                   Tujuan Utama
                 </label>
                 <select
                   id="ob-goal"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value as any)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm"
                 >
                   <option value="maintain">Maintain — Pertahankan berat (0%)</option>
                   <option value="build_strength">Build Strength — Tambah kekuatan (+10%)</option>
@@ -345,12 +345,12 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-              <div className="text-xs font-semibold text-slate-800">
+            <div className="rounded-lg border border-line bg-inset p-3 space-y-2">
+              <div className="text-xs font-semibold text-secondary">
                 Skrining Keamanan Kesehatan (centang bila berlaku pada Anda):
               </div>
               {SCREENING_LABELS.map((item) => (
-                <label key={item.key} className="flex items-center gap-2 text-xs text-slate-700">
+                <label key={item.key} className="flex items-center gap-2 text-xs text-secondary">
                   <input
                     type="checkbox"
                     checked={Boolean(screening[item.key])}
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
         {step === 3 ? (
           <div className="space-y-4">
             <div>
-              <span className="block text-xs font-semibold text-slate-700 mb-2">
+              <span className="block text-xs font-semibold text-secondary mb-2">
                 Hari Tersedia Latihan (pilih 2–6 hari):
               </span>
               <div className="flex flex-wrap gap-2">
@@ -379,8 +379,8 @@ export default function OnboardingPage() {
                       onClick={() => toggleWorkoutDay(idx)}
                       className={`rounded px-3 py-1.5 text-xs font-medium border ${
                         selected
-                          ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-slate-300 bg-white text-slate-700"
+                          ? "border-accent-line bg-accent-action text-white"
+                          : "border-line-strong bg-panel text-secondary"
                       }`}
                     >
                       {name}
@@ -391,14 +391,14 @@ export default function OnboardingPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="ob-min" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="ob-min" className="block text-xs font-semibold text-secondary mb-1">
                   Durasi per Sesi
                 </label>
                 <select
                   id="ob-min"
                   value={sessionMinutes}
                   onChange={(e) => setSessionMinutes(Number(e.target.value) as any)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm"
                 >
                   {[30, 45, 60, 75, 90].map((m) => (
                     <option key={m} value={m}>
@@ -408,28 +408,28 @@ export default function OnboardingPage() {
                 </select>
               </div>
               <div>
-                <label htmlFor="ob-exp" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="ob-exp" className="block text-xs font-semibold text-secondary mb-1">
                   Pengalaman
                 </label>
                 <select
                   id="ob-exp"
                   value={experienceLevel}
                   onChange={(e) => setExperienceLevel(e.target.value as any)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm"
                 >
                   <option value="beginner">Pemula (Beginner)</option>
                   <option value="intermediate">Menengah (Intermediate)</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="ob-eq" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="ob-eq" className="block text-xs font-semibold text-secondary mb-1">
                   Akses Alat
                 </label>
                 <select
                   id="ob-eq"
                   value={equipmentAccess}
                   onChange={(e) => setEquipmentAccess(e.target.value as any)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded border border-line-strong px-3 py-2 text-sm"
                 >
                   <option value="bodyweight_only">Tanpa Alat (Bodyweight)</option>
                   <option value="home_dumbbell">Dumbbell di Rumah</option>
@@ -443,9 +443,9 @@ export default function OnboardingPage() {
         {step === 4 ? (
           <div className="space-y-4">
             <div>
-              <label htmlFor="ob-budget" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="ob-budget" className="block text-xs font-semibold text-secondary mb-1">
                 Budget Makanan Harian (Rp 10.000 – Rp 500.000):{" "}
-                <strong className="text-indigo-700">{formatIdr(dailyBudgetIdr)}</strong>
+                <strong className="text-accent-ink">{formatIdr(dailyBudgetIdr)}</strong>
               </label>
               <input
                 id="ob-budget"
@@ -455,14 +455,14 @@ export default function OnboardingPage() {
                 step={1000}
                 value={dailyBudgetIdr}
                 onChange={(e) => setDailyBudgetIdr(Number(e.target.value))}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-line-strong px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <span className="block text-xs font-semibold text-slate-700 mb-1">
+              <span className="block text-xs font-semibold text-secondary mb-1">
                 Pengecualian / Alergi Pangan (opsional, maks. 15):
               </span>
-              <div className="max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 rounded border border-slate-200 p-2 text-xs">
+              <div className="max-h-48 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 rounded border border-line p-2 text-xs">
                 {foods.map((f) => (
                   <label key={f.id} className="flex items-center gap-2">
                     <input
@@ -478,12 +478,12 @@ export default function OnboardingPage() {
           </div>
         ) : null}
 
-        <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+        <div className="flex items-center justify-between pt-3 border-t border-line">
           <button
             type="button"
             disabled={step === 0}
             onClick={() => setStep((s) => Math.max(0, s - 1))}
-            className="rounded border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 disabled:opacity-40"
+            className="rounded border border-line-strong px-4 py-2 text-xs font-semibold text-secondary disabled:opacity-40"
           >
             Kembali
           </button>
@@ -491,7 +491,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={() => setStep((s) => Math.min(4, s + 1))}
-              className="rounded bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+              className="rounded bg-accent-action px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
             >
               Lanjut
             </button>
@@ -501,7 +501,7 @@ export default function OnboardingPage() {
               disabled={saving}
               onClick={handleFinish}
               data-testid="onboarding-submit"
-              className="rounded bg-emerald-600 px-5 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded bg-positive-action px-5 py-2 text-xs font-semibold text-white hover:bg-positive-hover disabled:opacity-50"
             >
               {saving ? "Menyimpan..." : "Simpan Profil & Hitung Estimasi"}
             </button>

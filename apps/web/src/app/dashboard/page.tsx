@@ -1,291 +1,242 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Activity, ChevronDown, ChevronRight, CircleAlert, Dumbbell, Flame, Plus, Scale, Sparkles, Utensils, Wallet, Zap } from "lucide-react";
+import { MotionScene } from "@/components/MotionScene";
 import { apiFetch, ApiClientError } from "@/lib/api";
 import { formatDec1, formatIdr, formatInt } from "@/lib/errorMessages";
 import { ErrorBanner } from "@/components/StatusWidgets";
 
+interface Intake {
+  energy_kcal: number;
+  protein_g: number;
+  cost_idr: number;
+}
+
 interface DayItem {
   date: string;
-  energy_kcal: { target: number; planned: number; actual: number };
-  protein_g: { target: number; planned: number; actual: number };
-  cost_idr: { budget: number; planned: number; actual: number };
-  workout_planned: boolean;
-  workout_completed: boolean;
+  planned: Intake;
+  actual: Intake & { has_logs: boolean };
+  workout: { planned: number; completed: number; skipped: number };
 }
 
 interface DashboardSummary {
   week_start: string;
-  week_end: string;
+  targets: { energy_kcal: number; protein_g: number; daily_budget_idr: number };
   days: DayItem[];
-  week_totals: {
-    energy_kcal: { target: number; planned: number; actual: number };
-    protein_g: { target: number; planned: number; actual: number };
-    cost_idr: { budget: number; planned: number; actual: number };
-  };
-  adherence: {
-    food_logged_days: number;
-    energy_within_10pct_days: number;
-    protein_met_days: number;
-    budget_met_days: number;
-    workouts_planned: number;
-    workouts_completed: number;
-  };
-  weight_trend: {
-    latest_kg: number | null;
-    delta_7d_kg: number | null;
-    points: { date: string; weight_kg: number }[];
-  };
-  alerts: {
-    code: string;
-    severity: "info" | "warn" | "error";
-    message: string;
-    action_url: string;
-  }[];
+  summary: { workouts_planned: number; workouts_completed: number };
+  alerts: { code: string; date: string; message: string }[];
   text_summary: string;
 }
 
-export default function DashboardPage() {
-  const [data, setData] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<{ msg: string; reqId?: string } | null>(null);
+interface WeightEntry { date: string; weight_kg: number }
 
-  const loadSummary = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await apiFetch<DashboardSummary>("/dashboard/summary");
-      setData(res);
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError({ msg: err.message, reqId: err.requestId });
-      } else {
-        setError({ msg: "Gagal memuat ringkasan dashboard." });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+const alertActions: Record<string, string> = {
+  BUDGET_OVERRUN: "/tracker",
+  PROTEIN_LOW: "/nutrition",
+  PLAN_OVER_BUDGET_AFTER_PRICE_CHANGE: "/meal-plan",
+  MISSED_WORKOUT: "/workout",
+  PROFILE_STALE: "/onboarding",
+};
 
-  useEffect(() => {
-    loadSummary();
-  }, [loadSummary]);
-
+function Chart({ days, target }: { days: DayItem[]; target: number }) {
+  const max = Math.max(1, target, ...days.map((day) => day.actual.energy_kcal));
+  const scale = (value: number) => 100 * value / max;
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard Mingguan</h1>
-          <p className="text-sm text-slate-600">
-            Perbandingan Target vs Rencana vs Realisasi Aktual 7 Hari Terakhir
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/tracker"
-            className="rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
-          >
-            + Catat Hari Ini
-          </Link>
-          <Link
-            href="/meal-plan"
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Rencana Makan
-          </Link>
-          <Link
-            href="/workout"
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Jadwal Latihan
-          </Link>
-        </div>
-      </div>
-
-      {error ? <ErrorBanner message={error.msg} requestId={error.reqId} onRetry={loadSummary} /> : null}
-
-      {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-28 animate-pulse rounded-xl bg-slate-200" />
-          ))}
-        </div>
-      ) : data ? (
-        <>
-          {/* Alerts list */}
-          {data.alerts.length > 0 ? (
-            <section aria-label="Peringatan dan Rekomendasi" className="space-y-2" data-testid="dashboard-alerts">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-                Peringatan & Rekomendasi ({data.alerts.length})
-              </h2>
-              <div className="space-y-2">
-                {data.alerts.map((al, i) => {
-                  const style =
-                    al.severity === "error"
-                      ? "border-rose-300 bg-rose-50 text-rose-950"
-                      : al.severity === "warn"
-                        ? "border-amber-300 bg-amber-50 text-amber-950"
-                        : "border-sky-300 bg-sky-50 text-sky-950";
-                  const icon = al.severity === "error" ? "✕" : al.severity === "warn" ? "⚠" : "ℹ";
-                  return (
-                    <div
-                      key={`${al.code}-${i}`}
-                      data-testid={`alert-${al.code}`}
-                      className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3.5 text-sm ${style}`}
-                    >
-                      <div>
-                        <span className="font-bold mr-1.5" aria-hidden="true">
-                          {icon}
-                        </span>
-                        <span className="font-semibold">[{al.code}]</span> {al.message}
-                      </div>
-                      <Link
-                        href={al.action_url}
-                        className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
-                      >
-                        Tindak Lanjuti
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
-
-          {/* Accessible text summary (PRD §3.7) */}
-          <div
-            data-testid="dashboard-text-summary"
-            className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800"
-          >
-            <span className="font-semibold">Ringkasan Teks Aksesibel: </span>
-            {data.text_summary}
+    <div className="weekly-chart" role="img" aria-label="Perbandingan energi aktual dan target per hari">
+      {days.map((day) => (
+        <div className="chart-day" key={day.date} title={`${day.date}: ${formatInt(day.actual.energy_kcal)} / ${formatInt(target)} kkal`}>
+          <div className="chart-bars">
+            <span style={{ height: `${scale(target)}%` }} className="chart-target" />
+            <span style={{ height: `${scale(day.actual.energy_kcal)}%` }} className="chart-actual" />
           </div>
-
-          {/* 4 KPI Cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Energi Mingguan (kkal)</div>
-              <div className="mt-1 text-xl font-bold text-slate-900">
-                {formatInt(data.week_totals.energy_kcal.actual)} / {formatInt(data.week_totals.energy_kcal.target)}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                Rencana: {formatInt(data.week_totals.energy_kcal.planned)} kkal • Terpenuhi ±10%:{" "}
-                {data.adherence.energy_within_10pct_days}/7 hari
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Protein Mingguan (gram)</div>
-              <div className="mt-1 text-xl font-bold text-slate-900">
-                {formatDec1(data.week_totals.protein_g.actual)} / {formatDec1(data.week_totals.protein_g.target)} g
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                Rencana: {formatDec1(data.week_totals.protein_g.planned)} g • Tercapai:{" "}
-                {data.adherence.protein_met_days}/7 hari
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Pengeluaran vs Budget (7 Hari)</div>
-              <div className="mt-1 text-xl font-bold text-slate-900">
-                {formatIdr(data.week_totals.cost_idr.actual)}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                Budget: {formatIdr(data.week_totals.cost_idr.budget)} • Rencana:{" "}
-                {formatIdr(data.week_totals.cost_idr.planned)}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Latihan & Berat Badan</div>
-              <div className="mt-1 text-xl font-bold text-slate-900">
-                {data.adherence.workouts_completed} / {data.adherence.workouts_planned} Sesi
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                Berat terkini:{" "}
-                {data.weight_trend.latest_kg !== null ? `${formatDec1(data.weight_trend.latest_kg)} kg` : "Belum ada"}
-                {data.weight_trend.delta_7d_kg !== null
-                  ? ` (${data.weight_trend.delta_7d_kg >= 0 ? "+" : ""}${formatDec1(data.weight_trend.delta_7d_kg)} kg)`
-                  : ""}
-              </div>
-            </div>
-          </div>
-
-          {/* 7-day breakdown table + visual bars */}
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-slate-900">
-              Rincian Harian ({data.week_start} s/d {data.week_end})
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-600">
-                    <th className="py-2 pr-3">Tanggal</th>
-                    <th className="py-2 px-3">Energi (Aktual / Rencana / Target)</th>
-                    <th className="py-2 px-3">Protein (Aktual / Rencana / Target)</th>
-                    <th className="py-2 px-3">Biaya (Aktual / Rencana / Budget)</th>
-                    <th className="py-2 pl-3">Latihan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {data.days.map((d) => {
-                    const kcalPct =
-                      d.energy_kcal.target > 0
-                        ? Math.min(100, Math.round((d.energy_kcal.actual / d.energy_kcal.target) * 100))
-                        : 0;
-                    const protPct =
-                      d.protein_g.target > 0
-                        ? Math.min(100, Math.round((d.protein_g.actual / d.protein_g.target) * 100))
-                        : 0;
-                    return (
-                      <tr key={d.date}>
-                        <td className="py-2.5 pr-3 font-medium text-slate-900 whitespace-nowrap">{d.date}</td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-medium text-slate-800">
-                            {formatInt(d.energy_kcal.actual)} / {formatInt(d.energy_kcal.planned)} /{" "}
-                            {formatInt(d.energy_kcal.target)} kkal
-                          </div>
-                          <div className="mt-1 h-1.5 w-full rounded bg-slate-100">
-                            <div className="h-1.5 rounded bg-emerald-600" style={{ width: `${kcalPct}%` }} />
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-medium text-slate-800">
-                            {formatDec1(d.protein_g.actual)} / {formatDec1(d.protein_g.planned)} /{" "}
-                            {formatDec1(d.protein_g.target)} g
-                          </div>
-                          <div className="mt-1 h-1.5 w-full rounded bg-slate-100">
-                            <div className="h-1.5 rounded bg-sky-600" style={{ width: `${protPct}%` }} />
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap">
-                          {formatIdr(d.cost_idr.actual)} / {formatIdr(d.cost_idr.planned)} /{" "}
-                          {formatIdr(d.cost_idr.budget)}
-                        </td>
-                        <td className="py-2.5 pl-3 whitespace-nowrap">
-                          {d.workout_completed ? (
-                            <span className="inline-flex rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900">
-                              ✓ Selesai
-                            </span>
-                          ) : d.workout_planned ? (
-                            <span className="inline-flex rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                              Terjadwal
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">Istirahat</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </>
-      ) : null}
+          <small>{dayName.format(parseDay(day.date))}</small>
+        </div>
+      ))}
     </div>
   );
 }
 
+const parseDay = (day: string) => new Date(`${day}T12:00:00+07:00`);
+const dayName = new Intl.DateTimeFormat("id-ID", { weekday: "short", timeZone: "Asia/Jakarta" });
+const fullDate = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", timeZone: "Asia/Jakarta" });
+
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardSummary | null>(null);
+  const [weight, setWeight] = useState<WeightEntry | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<{ msg: string; reqId?: string; status?: number; code?: string } | null>(null);
+  const loadSummary = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [result, weights] = await Promise.all([
+        apiFetch<DashboardSummary>("/dashboard", { signal }),
+        apiFetch<{ items: WeightEntry[] }>("/logs/weight", { signal }).catch(() => null),
+      ]);
+      if (!signal?.aborted) {
+        setData(result);
+        setWeight(weights?.items.at(-1) ?? null);
+      }
+    } catch (err) {
+      if (signal?.aborted) return;
+      if (err instanceof ApiClientError) setError({ msg: err.message, reqId: err.requestId, status: err.status, code: err.code });
+      else setError({ msg: "Gagal memuat ringkasan dashboard." });
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const request = new AbortController();
+    void loadSummary(request.signal);
+    return () => request.abort();
+  }, [loadSummary]);
+
+  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jakarta" }).format(new Date());
+  const day = data?.days.find((item) => item.date === (selected ?? today)) ?? data?.days[0];
+  const target = data?.targets;
+  const metrics = day && target ? [
+    { label: "Energi", icon: Flame, tone: "energy", value: formatInt(day.actual.energy_kcal), target: formatInt(target.energy_kcal),
+      unit: "kkal", actual: day.actual.energy_kcal, total: target.energy_kcal },
+    { label: "Protein", icon: Zap, tone: "protein", value: formatDec1(day.actual.protein_g), target: formatDec1(target.protein_g),
+      unit: "g", actual: day.actual.protein_g, total: target.protein_g },
+    { label: "Pengeluaran", icon: Wallet, tone: "budget", value: formatIdr(day.actual.cost_idr), target: formatIdr(target.daily_budget_idr),
+      unit: "", actual: day.actual.cost_idr, total: target.daily_budget_idr },
+  ] : [];
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-heading">
+        <div><h1>Dashboard</h1><p>Ringkasan nutrisi, anggaran, dan latihan Anda.</p></div>
+        <Link href="/tracker" className="action-primary desktop-add"><Plus size={18} /> Catat hari ini</Link>
+      </div>
+
+      <section className="dashboard-hero">
+        <MotionScene />
+        <div className="hero-copy">
+          <span className="hero-kicker"><Activity size={15} /> TARGET MINGGUAN</span>
+          <h2>Latihan yang<br />terencana.</h2>
+          <p>Susun sesi berdasarkan jadwal dan peralatan Anda.</p>
+          <Link href="/workout" className="action-primary">Buka jadwal <ChevronRight size={17} /></Link>
+        </div>
+      </section>
+
+      {error && (error.status === 401 ? (
+        <div className="panel signed-out"><p>Masuk untuk melihat progres pribadi Anda.</p><Link href="/login" className="action-primary">Masuk</Link></div>
+      ) : error.code === "CONSENT_REQUIRED" ? (
+        <div className="panel signed-out"><p>Lengkapi persetujuan data untuk melihat ringkasan Anda.</p><Link href="/onboarding" className="action-primary">Atur profil</Link></div>
+      ) : <ErrorBanner message={error.msg} requestId={error.reqId} onRetry={() => void loadSummary()} />)}
+
+      {!data && loading && <div className="dashboard-loading panel" role="status">Memuat ringkasan…</div>}
+
+      {data && day && target && (
+        <>
+          <section className="dashboard-overview">
+            <div className="overview-main">
+              <div className="section-heading"><h2>Minggu ini</h2><span>{fullDate.formatRange(parseDay(data.week_start), parseDay(data.days.at(-1)?.date ?? data.week_start))}</span></div>
+              <div className="week-strip" aria-label="Pilih hari untuk melihat ringkasan">
+                {data.days.map((item) => (
+                  <button type="button" key={item.date} aria-pressed={day.date === item.date} onClick={() => setSelected(item.date)} aria-label={fullDate.format(parseDay(item.date))}>
+                    <small>{dayName.format(parseDay(item.date))}</small><span>{Number(item.date.slice(-2))}</span>
+                    <i data-logged={item.actual.has_logs || item.workout.completed > 0} />
+                  </button>
+                ))}
+              </div>
+              <div className="section-heading metrics-heading">
+                <h2>{day.date === today ? "Nutrisi hari ini" : `Ringkasan ${fullDate.format(parseDay(day.date))}`}</h2>
+                <Link className="text-action" href="/nutrition">Target <ChevronRight size={15} /></Link>
+              </div>
+              <div className="metric-grid">
+                {metrics.map(({ icon: Icon, tone, label, value, target, unit, actual, total }) => (
+                  <div className={`panel metric metric-${tone}`} key={label}>
+                    <span className="metric-icon"><Icon size={19} /></span><span className="metric-label">{label}</span>
+                    <strong>{value} <small>{unit}</small></strong>
+                    <span className="metric-target">dari {target}{unit && ` ${unit}`}</span>
+                    <span className="metric-track" aria-hidden="true"><i style={{ width: `${total > 0 ? Math.min(100, 100 * actual / total) : 0}%` }} /></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <section className="panel chart-panel">
+              <div className="section-heading"><h2>Energi mingguan</h2><span>kkal</span></div>
+              <div className="chart-total"><strong>{formatInt(data.days.reduce((total, item) => total + item.actual.energy_kcal, 0))}</strong><span> / {formatInt(target.energy_kcal * data.days.length)} target</span></div>
+              <Chart days={data.days} target={target.energy_kcal} />
+              <div className="chart-legend"><span><i /> Aktual</span><span><i /> Target</span></div>
+            </section>
+          </section>
+
+          <section className="dashboard-activity">
+            <div className="section-heading"><h2>Aktivitas minggu ini</h2><Link href="/tracker" className="text-action">Lihat progres <ChevronRight size={15} /></Link></div>
+            <div className="activity-grid">
+              <Link href="/tracker" className="panel activity-row"><span className="quick-icon"><Dumbbell size={20} /></span>
+                <span><strong>Sesi latihan</strong><small>{day.workout.completed ? "Sesi hari terpilih selesai" : day.workout.planned ? "Ada sesi terjadwal pada hari terpilih" : "Hari terpilih tanpa jadwal"}</small></span>
+                <b>{data.summary.workouts_completed}/{data.summary.workouts_planned}</b>
+              </Link>
+              <Link href="/tracker" className="panel activity-row"><span className="quick-icon"><Scale size={20} /></span>
+                <span><strong>Berat badan</strong><small>{weight ? fullDate.format(parseDay(weight.date)) : "Belum ada catatan"}</small></span>
+                <b>{weight ? `${formatDec1(weight.weight_kg)} kg` : "—"}</b>
+              </Link>
+            </div>
+          </section>
+        </>
+      )}
+
+      <section>
+        <div className="section-heading"><h2>Rencanakan berikutnya</h2></div>
+        <div className="explore-grid">
+          <Link href="/meal-plan" className="explore-card">
+            <span className="explore-art meal-art"><Utensils size={56} strokeWidth={1.25} /></span>
+            <span className="explore-copy"><strong>Menu 7 hari</strong><small>Sesuaikan dengan anggaran</small></span>
+            <ChevronRight size={18} />
+          </Link>
+          <Link href="/workout" className="explore-card">
+            <span className="explore-art workout-art"><Dumbbell size={61} strokeWidth={1.25} /></span>
+            <span className="explore-copy"><strong>Jadwal latihan</strong><small>Susun sesi untuk minggu ini</small></span>
+            <ChevronRight size={18} />
+          </Link>
+          <Link href="/chat" className="explore-card">
+            <span className="explore-art chat-art"><Sparkles size={54} strokeWidth={1.25} /></span>
+            <span className="explore-copy"><strong>Asisten AI</strong><small>Bahas rencana Anda</small></span>
+            <ChevronRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      {data && (
+        <>
+          {data.alerts.length > 0 && (
+            <section className="dashboard-alerts" data-testid="dashboard-alerts">
+              <div className="section-heading"><h2>Catatan dan saran</h2></div>
+              {data.alerts.map((alert, i) => (
+                <div className="panel alert-row" key={`${alert.code}-${i}`} data-severity="warn" data-testid={`alert-${alert.code}`}>
+                  <CircleAlert size={19} /><p>{alert.message}</p><Link href={alertActions[alert.code] ?? "/tracker"} className="action-secondary">Tindak lanjuti</Link>
+                </div>
+              ))}
+            </section>
+          )}
+          <div className="panel dashboard-loading" data-testid="dashboard-text-summary">{data.text_summary}</div>
+          <details className="panel detail-panel">
+            <summary>Rincian mingguan <ChevronDown size={18} /></summary>
+            <div className="overflow-x-auto">
+              <table>
+                <thead><tr><th>Tanggal</th><th>Energi (aktual / rencana / target)</th><th>Protein (aktual / rencana / target)</th><th>Biaya (aktual / rencana / anggaran)</th><th>Latihan</th></tr></thead>
+                <tbody>
+                  {data.days.map((item) => <tr key={item.date}>
+                    <th scope="row">{fullDate.format(parseDay(item.date))}</th>
+                    <td>{formatInt(item.actual.energy_kcal)} / {formatInt(item.planned.energy_kcal)} / {formatInt(data.targets.energy_kcal)} kkal</td>
+                    <td>{formatDec1(item.actual.protein_g)} / {formatDec1(item.planned.protein_g)} / {formatDec1(data.targets.protein_g)} g</td>
+                    <td>{formatIdr(item.actual.cost_idr)} / {formatIdr(item.planned.cost_idr)} / {formatIdr(data.targets.daily_budget_idr)}</td>
+                    <td>{item.workout.completed ? "Selesai" : item.workout.planned ? "Terjadwal" : "Istirahat"}</td>
+                  </tr>)}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </>
+      )}
+    </div>
+  );
+}

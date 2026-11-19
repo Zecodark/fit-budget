@@ -28,21 +28,21 @@ export default function AdminAuditPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin — Log Audit Perubahan</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold text-content">Log audit</h1>
+          <p className="text-sm text-muted">
             Catatan seluruh aksi mutasi katalog pangan, harga, dan gerakan latihan oleh admin.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
-          <Link href="/admin/foods" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/foods" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Pangan
           </Link>
-          <Link href="/admin/prices" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/prices" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Harga Pangan
           </Link>
-          <Link href="/admin/exercises" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5">
+          <Link href="/admin/exercises" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
             Katalog Latihan
           </Link>
         </div>
@@ -51,14 +51,14 @@ export default function AdminAuditPage() {
       {error ? <ErrorBanner message={error.msg} requestId={error.reqId} /> : null}
 
       <div className="flex items-center gap-3">
-        <label htmlFor="entity-filter" className="text-xs font-semibold text-slate-700">
+        <label htmlFor="entity-filter" className="text-xs font-semibold text-secondary">
           Filter Entitas:
         </label>
         <select
           id="entity-filter"
           value={entityType}
           onChange={(e) => setEntityType(e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
+          className="rounded-lg border border-line-strong bg-panel px-3 py-1.5 text-xs"
         >
           <option value="">Semua Entitas</option>
           <option value="food">food</option>
@@ -67,13 +67,13 @@ export default function AdminAuditPage() {
         </select>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm overflow-x-auto">
+      <div className="rounded-xl border border-line bg-panel p-5 shadow-sm overflow-x-auto">
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500">Belum ada entri audit.</p>
+          <p className="text-sm text-muted">Belum ada entri audit.</p>
         ) : (
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-600">
+              <tr className="border-b border-line text-muted">
                 <th className="py-2">Waktu</th>
                 <th className="py-2">Aksi</th>
                 <th className="py-2">Entitas</th>
@@ -81,7 +81,7 @@ export default function AdminAuditPage() {
                 <th className="py-2">Sesudah (Ringkas)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-line">
               {items.map((it) => (
                 <tr key={it.id}>
                   <td className="py-2 whitespace-nowrap">{it.created_at}</td>
