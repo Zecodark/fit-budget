@@ -9,21 +9,20 @@ interface ChatMessageItem {
   id: string;
   role: "user" | "assistant";
   content: string;
-  proposals: ProposalData[];
+  conversation_id: string;
   created_at: string;
 }
 
 interface AiStatus {
-  enabled: boolean;
+  available: boolean;
   provider: string;
-  model: string | null;
-  cloud_consent_required: boolean;
-  cloud_consent_granted: boolean;
+  degraded_reason: string | null;
 }
 
 export default function ChatPage() {
   const [status, setStatus] = useState<AiStatus | null>(null);
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
+  const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [busyProposalId, setBusyProposalId] = useState<string | null>(null);
@@ -32,10 +31,13 @@ export default function ChatPage() {
 
   const loadChat = useCallback(async () => {
     try {
-      const st = await apiFetch<AiStatus>("/ai/status");
+      const [st, history] = await Promise.all([
+        apiFetch<AiStatus>("/ai/status"),
+        apiFetch<{ items: ChatMessageItem[]; proposals: ProposalData[] }>("/ai/history"),
+      ]);
       setStatus(st);
-      const hist = await apiFetch<{ messages: ChatMessageItem[] }>("/ai/messages");
-      setMessages(hist.messages || []);
+      setMessages(history.items);
+      setProposals(history.proposals);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, code: err.code, reqId: err.requestId });
@@ -49,14 +51,14 @@ export default function ChatPage() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || sending) return;
+    if (!input.trim() || sending || !status?.available) return;
     setSending(true);
     setError(null);
     setActionBanner(null);
     try {
       await apiFetch("/ai/chat", {
         method: "POST",
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify({ message: input.trim(), conversation_id: messages.at(-1)?.conversation_id }),
       });
       setInput("");
       await loadChat();
@@ -76,16 +78,14 @@ export default function ChatPage() {
     setError(null);
     setActionBanner(null);
     try {
-      const res = await apiFetch<{ status: string; new_plan_version?: number }>(
+      await apiFetch(
         `/ai/proposals/${proposal.id}/confirm`,
         {
           method: "POST",
-          body: JSON.stringify({ expected_base_version: proposal.base_version }),
+          body: JSON.stringify({ base_version: proposal.base_version ?? 0 }),
         },
       );
-      setActionBanner(
-        `Usulan berhasil dikonfirmasi dan diterapkan (Versi Rencana Baru: v${res.new_plan_version ?? "-"}).`,
-      );
+      setActionBanner("Usulan berhasil dikonfirmasi dan diterapkan.");
       await loadChat();
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -115,7 +115,8 @@ export default function ChatPage() {
     }
   };
 
-  const aiDisabled = status ? !status.enabled || error?.code === "AI_UNAVAILABLE" : false;
+  const needsCloudConsent = status?.degraded_reason === "ai_cloud_consent_required" || error?.code === "AI_CONSENT_REQUIRED";
+  const aiDisabled = !status?.available || needsCloudConsent;
 
   return (
     <div className="space-y-6">
@@ -131,17 +132,17 @@ export default function ChatPage() {
           <span
             data-testid="ai-provider-badge"
             className={`rounded-full px-3 py-1 text-xs font-semibold border ${
-              status.enabled
+              status.available
                 ? "border-positive-line bg-positive-soft text-positive"
                 : "border-warning-line bg-warning-soft text-warning"
             }`}
           >
-            Provider: {status.provider} {status.enabled ? "(Aktif)" : "(Nonaktif)"}
+            Provider: {status.provider} {status.available ? "(Aktif)" : needsCloudConsent ? "(Menunggu persetujuan)" : "(Nonaktif)"}
           </span>
         ) : null}
       </div>
 
-      {aiDisabled ? (
+      {status && !status.available && !needsCloudConsent ? (
         <div
           role="alert"
           data-testid="ai-unavailable-banner"
@@ -166,16 +167,16 @@ export default function ChatPage() {
         </div>
       ) : null}
 
-      {status?.cloud_consent_required && !status?.cloud_consent_granted ? (
+      {needsCloudConsent ? (
         <div
           role="alert"
           className="rounded-xl border border-accent-line bg-accent-soft p-4 text-sm text-accent-ink flex flex-wrap items-center justify-between gap-2"
         >
           <span>
-            Penyedia AI cloud memerlukan persetujuan pengiriman konteks anonim. Aktifkan di Pengaturan Privasi.
+            Untuk memakai Gemini, aktifkan Persetujuan AI Cloud di Pengaturan Privasi.
           </span>
           <Link
-            href="/settings"
+            href="/settings#ai-cloud-consent"
             className="rounded bg-accent-hover px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-hover"
           >
             Buka Pengaturan
@@ -238,23 +239,26 @@ export default function ChatPage() {
                 </div>
                 <div>{m.content}</div>
               </div>
-              {m.proposals && m.proposals.length > 0 ? (
-                <div className="w-full max-w-xl space-y-2">
-                  {m.proposals.map((p) => (
-                    <ProposalCard
-                      key={p.id}
-                      proposal={p}
-                      busy={busyProposalId === p.id}
-                      onConfirm={handleConfirmProposal}
-                      onReject={handleRejectProposal}
-                    />
-                  ))}
-                </div>
-              ) : null}
+
             </div>
           ))
         )}
       </div>
+
+      {proposals.length > 0 && (
+        <section className="space-y-2" aria-label="Usulan perubahan">
+          <h2 className="font-semibold">Usulan perubahan</h2>
+          {proposals.map((proposal) => (
+            <ProposalCard
+              key={proposal.id}
+              proposal={proposal}
+              busy={busyProposalId !== null}
+              onConfirm={handleConfirmProposal}
+              onReject={handleRejectProposal}
+            />
+          ))}
+        </section>
+      )}
 
       {/* Chat input form */}
       <form onSubmit={handleSend} className="flex gap-2">
@@ -273,7 +277,7 @@ export default function ChatPage() {
               ? "Asisten AI sedang tidak aktif..."
               : "Tanyakan tentang rencana makan/latihan atau minta perubahan..."
           }
-          className="flex-1 rounded-xl border border-line-strong bg-panel px-4 py-2.5 text-sm disabled:bg-raised"
+          className="min-w-0 flex-1 rounded-xl border border-line-strong bg-panel px-4 py-2.5 text-sm disabled:bg-raised"
         />
         <button
           type="submit"

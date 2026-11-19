@@ -127,7 +127,7 @@ class GeminiProvider:
             payload["systemInstruction"] = {"parts": [{"text": "\n\n".join(sys_parts)}]}
         try:
             async with httpx.AsyncClient(timeout=timeout_s) as client:
-                resp = await client.post(url, params={"key": self.api_key}, json=payload)
+                resp = await client.post(url, headers={"x-goog-api-key": self.api_key}, json=payload)
         except httpx.TimeoutException as exc:
             raise AITimeout("Gemini timeout") from exc
         except httpx.HTTPError as exc:

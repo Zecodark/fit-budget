@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import { apiFetch, ApiClientError } from "@/lib/api";
 import { ErrorBanner } from "@/components/StatusWidgets";
 
+interface ConsentState {
+  consent_version: string;
+  current: { data_processing: boolean; ai_cloud: boolean } | null;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
-  const [cloudConsent, setCloudConsent] = useState(false);
+  const [consent, setConsent] = useState<ConsentState | null>(null);
+  const [savingConsent, setSavingConsent] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
@@ -16,8 +22,7 @@ export default function SettingsPage() {
 
   const loadSettings = useCallback(async () => {
     try {
-      const st = await apiFetch<{ cloud_consent_granted: boolean }>("/ai/status");
-      setCloudConsent(Boolean(st.cloud_consent_granted));
+      setConsent(await apiFetch<ConsentState>("/consent"));
     } catch {
       // ignore
     }
@@ -28,14 +33,20 @@ export default function SettingsPage() {
   }, [loadSettings]);
 
   const handleToggleCloudConsent = async (granted: boolean) => {
+    if (!consent?.current?.data_processing || savingConsent) return;
+    setSavingConsent(true);
     setError(null);
     setBanner(null);
     try {
-      await apiFetch("/consent", {
+      const current = await apiFetch<NonNullable<ConsentState["current"]>>("/consent", {
         method: "POST",
-        body: JSON.stringify({ consent_type: "ai_cloud", granted }),
+        body: JSON.stringify({
+          consent_version: consent.consent_version,
+          data_processing: consent.current.data_processing,
+          ai_cloud: granted,
+        }),
       });
-      setCloudConsent(granted);
+      setConsent({ ...consent, current });
       setBanner(
         granted
           ? "Persetujuan pemrosesan AI cloud diaktifkan."
@@ -44,7 +55,11 @@ export default function SettingsPage() {
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, reqId: err.requestId });
+      } else {
+        setError({ msg: "Gagal menyimpan persetujuan AI Cloud." });
       }
+    } finally {
+      setSavingConsent(false);
     }
   };
 
@@ -128,7 +143,7 @@ export default function SettingsPage() {
           Sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP), nama dan alamat email Anda tidak pernah
           dikirim ke penyedia AI eksternal.
         </p>
-        <label className="flex items-center justify-between gap-4 rounded-lg border border-line p-3 text-sm">
+        <label id="ai-cloud-consent" className="flex items-center justify-between gap-4 rounded-lg border border-line p-3 text-sm">
           <div>
             <div className="font-semibold text-content">Persetujuan AI Cloud (`ai_cloud`)</div>
             <div className="text-xs text-muted">
@@ -137,7 +152,8 @@ export default function SettingsPage() {
           </div>
           <input
             type="checkbox"
-            checked={cloudConsent}
+            checked={consent?.current?.ai_cloud ?? false}
+            disabled={!consent?.current?.data_processing || savingConsent}
             onChange={(e) => handleToggleCloudConsent(e.target.checked)}
             className="h-4 w-4"
           />
