@@ -142,6 +142,7 @@ class ConfirmVersionRequest(StrictModel):
 
 class GenerateWorkoutPlanRequest(StrictModel):
     week_start: DateType
+    equipment_access: Literal["bodyweight_only", "home_dumbbell", "gym_full"] | None = None
 
 
 class SessionMove(StrictModel):
@@ -270,10 +271,10 @@ class AdminExerciseCreateRequest(StrictModel):
     muscle_group: str = Field(min_length=2, max_length=40)
     equipment: Literal["bodyweight", "dumbbell", "gym"]
     difficulty: int = Field(ge=1, le=2)
-    rank: int = Field(ge=1, le=50)
+    rank: int = Field(ge=1, le=200)
     sets: int = Field(ge=1, le=10)
-    reps_min: int = Field(ge=1, le=100)
-    reps_max: int = Field(ge=1, le=100)
+    reps_min: int = Field(ge=1, le=600)
+    reps_max: int = Field(ge=1, le=600)
     unit: Literal["reps", "seconds"]
     rest_s: int = Field(ge=10, le=300)
     instructions: str = ""
@@ -301,10 +302,10 @@ class AdminExercisePatchRequest(StrictModel):
     muscle_group: str | None = Field(default=None, min_length=2, max_length=40)
     equipment: Literal["bodyweight", "dumbbell", "gym"] | None = None
     difficulty: int | None = Field(default=None, ge=1, le=2)
-    rank: int | None = Field(default=None, ge=1, le=50)
+    rank: int | None = Field(default=None, ge=1, le=200)
     sets: int | None = Field(default=None, ge=1, le=10)
-    reps_min: int | None = Field(default=None, ge=1, le=100)
-    reps_max: int | None = Field(default=None, ge=1, le=100)
+    reps_min: int | None = Field(default=None, ge=1, le=600)
+    reps_max: int | None = Field(default=None, ge=1, le=600)
     unit: Literal["reps", "seconds"] | None = None
     rest_s: int | None = Field(default=None, ge=10, le=300)
     instructions: str | None = None

@@ -181,13 +181,24 @@ def delete_food_log(
     return Response(status_code=204)
 
 
-def _serialize_workout_log(wl: WorkoutLog, ex_name: str, progression_hint: str | None = None) -> dict:
+def _serialize_workout_log(
+    wl: WorkoutLog,
+    ex_name: str,
+    progression_hint: str | None = None,
+    ex: Exercise | None = None,
+) -> dict:
+    eq = ex.equipment if ex else None
+    cat = "gym" if eq == "gym" else ("workout" if eq == "bodyweight" else ("dumbbell" if eq == "dumbbell" else None))
     return {
         "id": wl.id,
         "date": wl.date.isoformat(),
         "session_id": wl.session_id,
         "exercise_id": wl.exercise_id,
         "exercise_name": ex_name,
+        "exercise_equipment": eq,
+        "exercise_category": cat,
+        "exercise_muscle_group": ex.muscle_group if ex else None,
+        "exercise_unit": ex.unit if ex else "reps",
         "sets": wl.sets_json,
         "effort_rating": wl.effort_rating,
         "progression_suggestion": progression_hint,
@@ -228,7 +239,7 @@ def create_workout_log(
         and all((s.get("reps") or 0) >= ex.reps_max for s in sets_clean)
     ):
         hint = "Semua set mencapai batas atas repetisi dengan usaha terkendali — coba tambah beban kecil pada sesi berikutnya."
-    return _serialize_workout_log(wl, ex.name, hint)
+    return _serialize_workout_log(wl, ex.name, hint, ex)
 
 
 @router.get("/logs/workout")
@@ -241,9 +252,17 @@ def list_workout_logs(
     if date:
         stmt = stmt.where(WorkoutLog.date == date)
     rows = db.scalars(stmt).all()
-    ex_map = {e.id: e.name for e in db.scalars(select(Exercise)).all()}
+    ex_map = {e.id: e for e in db.scalars(select(Exercise)).all()}
     return {
-        "items": [_serialize_workout_log(r, ex_map.get(r.exercise_id, "Latihan")) for r in rows],
+        "items": [
+            _serialize_workout_log(
+                r,
+                ex_map[r.exercise_id].name if r.exercise_id in ex_map else "Latihan",
+                None,
+                ex_map.get(r.exercise_id),
+            )
+            for r in rows
+        ],
         "total": len(rows),
     }
 
@@ -264,7 +283,7 @@ def patch_workout_log(
         wl.effort_rating = body.effort_rating
     ex = db.get(Exercise, wl.exercise_id)
     db.flush()
-    return _serialize_workout_log(wl, ex.name if ex else "Latihan")
+    return _serialize_workout_log(wl, ex.name if ex else "Latihan", None, ex)
 
 
 @router.delete("/logs/workout/{log_id}", status_code=204)

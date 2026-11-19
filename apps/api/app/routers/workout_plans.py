@@ -49,7 +49,12 @@ def generate_workout_endpoint(
     user: User = Depends(require_consent),
     db: Session = Depends(get_db),
 ) -> dict:
-    return generate_and_save_workout_plan(db, user_id=user.id, week_start=body.week_start)
+    return generate_and_save_workout_plan(
+        db,
+        user_id=user.id,
+        week_start=body.week_start,
+        equipment_access=body.equipment_access,
+    )
 
 
 @router.get("/workout-plans")

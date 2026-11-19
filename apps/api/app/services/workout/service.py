@@ -55,6 +55,8 @@ def serialize_workout_plan(db: Session, plan: WorkoutPlan) -> dict[str, Any]:
         ex_out = []
         for item in sorted(s.exercises, key=lambda x: x.position):
             ex = ex_map.get(item.exercise_id)
+            eq = ex.equipment if ex else "gym"
+            cat = "gym" if eq == "gym" else ("workout" if eq == "bodyweight" else "both")
             ex_out.append(
                 {
                     "id": item.id,
@@ -62,6 +64,9 @@ def serialize_workout_plan(db: Session, plan: WorkoutPlan) -> dict[str, Any]:
                     "exercise_id": item.exercise_id,
                     "name": ex.name if ex else "Latihan",
                     "pattern": ex.pattern if ex else "",
+                    "muscle_group": ex.muscle_group if ex else "",
+                    "equipment": eq,
+                    "category": cat,
                     "sets": item.sets,
                     "reps_min": item.reps_min,
                     "reps_max": item.reps_max,
@@ -83,11 +88,13 @@ def serialize_workout_plan(db: Session, plan: WorkoutPlan) -> dict[str, Any]:
                 "exercises": ex_out,
             }
         )
+    params = plan.params_json or {}
     return {
         "id": plan.id,
         "week_start": plan.week_start.isoformat(),
         "status": plan.status,
         "version": plan.version,
+        "equipment_access": params.get("equipment_access"),
         "sessions": sessions_out,
         "warnings": plan.warnings_json or [],
         "engine_version": plan.engine_version,
@@ -102,17 +109,22 @@ def generate_and_save_workout_plan(
     *,
     user_id: str,
     week_start: date,
+    equipment_access: str | None = None,
 ) -> dict[str, Any]:
     if week_start.weekday() != 0:
         raise validation_error("week_start harus hari Senin.", field="week_start")
     _, pref, _ = require_user_can_generate(db, user_id)
+    chosen_eq = equipment_access or pref.equipment_access or "gym_full"
+    if equipment_access and pref.equipment_access != equipment_access:
+        pref.equipment_access = equipment_access
+        db.flush()
     specs = load_exercise_specs(db)
     gen = generate_workout_plan(
         exercises=specs,
         workout_days=list(pref.workout_days or [0, 2, 4]),
         session_minutes=int(pref.session_minutes or 60),
         experience_level=pref.experience_level or "beginner",
-        equipment_access=pref.equipment_access or "gym_full",
+        equipment_access=chosen_eq,
         excluded_exercise_ids=set(pref.excluded_exercise_ids or []),
         week_start=week_start,
     )
@@ -129,7 +141,7 @@ def generate_and_save_workout_plan(
             "workout_days": pref.workout_days,
             "session_minutes": pref.session_minutes,
             "experience_level": pref.experience_level,
-            "equipment_access": pref.equipment_access,
+            "equipment_access": chosen_eq,
             "excluded_exercise_ids": pref.excluded_exercise_ids,
         },
         engine_version=ENGINE_VERSION,

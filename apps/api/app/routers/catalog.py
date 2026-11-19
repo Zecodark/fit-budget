@@ -60,6 +60,14 @@ def serialize_food(f: Food, p: FoodPrice | None) -> dict:
     }
 
 
+def exercise_category(equipment: str) -> str:
+    if equipment == "gym":
+        return "gym"
+    if equipment == "bodyweight":
+        return "workout"
+    return "both"
+
+
 def serialize_exercise(e: Exercise) -> dict:
     return {
         "id": e.id,
@@ -68,6 +76,7 @@ def serialize_exercise(e: Exercise) -> dict:
         "pattern": e.pattern,
         "muscle_group": e.muscle_group,
         "equipment": e.equipment,
+        "category": exercise_category(e.equipment),
         "difficulty": e.difficulty,
         "rank": e.rank,
         "sets": e.sets,
@@ -84,6 +93,7 @@ def serialize_exercise(e: Exercise) -> dict:
 @router.get("/foods")
 def list_foods(
     query: str = "",
+    q: str = "",
     group: str = "",
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
@@ -94,9 +104,9 @@ def list_foods(
     if group:
         stmt = stmt.where(Food.food_group == group)
     all_rows = db.scalars(stmt).all()
-    if query:
-        q = query.strip().lower()
-        all_rows = [f for f in all_rows if q in f.name.lower() or q in f.code.lower()]
+    search = (query or q).strip().lower()
+    if search:
+        all_rows = [f for f in all_rows if search in f.name.lower() or search in f.code.lower()]
     total = len(all_rows)
     sliced = all_rows[offset : offset + limit]
     lp = _latest_prices(db, "default")
@@ -140,6 +150,9 @@ def list_prices(
 def list_exercises(
     pattern: str = "",
     equipment: str = "",
+    category: str = "",
+    muscle_group: str = "",
+    query: str = "",
     _user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -148,6 +161,30 @@ def list_exercises(
         stmt = stmt.where(Exercise.pattern == pattern)
     if equipment:
         stmt = stmt.where(Exercise.equipment == equipment)
+    elif category:
+        cat = category.strip().lower()
+        if cat == "gym":
+            stmt = stmt.where(Exercise.equipment.in_(("gym", "dumbbell")))
+        elif cat == "gym_only":
+            stmt = stmt.where(Exercise.equipment == "gym")
+        elif cat == "workout":
+            stmt = stmt.where(Exercise.equipment == "bodyweight")
+        elif cat == "workout_dumbbell":
+            stmt = stmt.where(Exercise.equipment.in_(("bodyweight", "dumbbell")))
+        elif cat == "dumbbell":
+            stmt = stmt.where(Exercise.equipment == "dumbbell")
+    if muscle_group:
+        stmt = stmt.where(Exercise.muscle_group == muscle_group)
     rows = db.scalars(stmt).all()
+    if query:
+        q = query.strip().lower()
+        rows = [
+            e
+            for e in rows
+            if q in e.name.lower()
+            or q in e.code.lower()
+            or q in e.muscle_group.lower()
+            or q in e.pattern.lower()
+        ]
     return {"items": [serialize_exercise(e) for e in rows], "total": len(rows)}
 

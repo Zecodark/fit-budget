@@ -375,3 +375,43 @@ def test_s1_s5_s6_idor_sql_xss_and_account_deletion(client):
         assert db.get(User, uid_a) is None
 
     assert _login(client, "usera@example.com", "UserAPassword1").status_code == 401
+
+
+def test_exercise_catalog_gym_vs_workout_separation(client):
+    register_and_setup_user(client, "cattest@example.com", "CatTestPass123")
+    all_res = client.get("/api/v1/exercises").json()
+    assert all_res["total"] >= 150
+
+    gym_res = client.get("/api/v1/exercises", params={"category": "gym"}).json()
+    assert gym_res["total"] >= 60
+    assert all(e["equipment"] in ("gym", "dumbbell") for e in gym_res["items"])
+
+    gym_only_res = client.get("/api/v1/exercises", params={"category": "gym_only"}).json()
+    assert gym_only_res["total"] >= 40
+    assert all(e["equipment"] == "gym" and e["category"] == "gym" for e in gym_only_res["items"])
+
+    workout_res = client.get("/api/v1/exercises", params={"category": "workout"}).json()
+    assert workout_res["total"] >= 40
+    assert all(e["equipment"] == "bodyweight" and e["category"] == "workout" for e in workout_res["items"])
+
+    search_res = client.get("/api/v1/exercises", params={"category": "workout", "muscle_group": "chest", "query": "push-up"}).json()
+    assert search_res["total"] >= 4
+    assert all("push-up" in e["name"].lower() and e["muscle_group"] == "chest" for e in search_res["items"])
+
+    # Generating workout plan with equipment_access override ("bodyweight_only" vs "gym_full")
+    wp_bw = client.post(
+        "/api/v1/workout-plans/generate",
+        json={"week_start": "2026-11-09", "equipment_access": "bodyweight_only"},
+    ).json()
+    assert wp_bw["equipment_access"] == "bodyweight_only"
+    for s in wp_bw["sessions"]:
+        for ex in s["exercises"]:
+            assert ex["equipment"] == "bodyweight"
+            assert ex["category"] == "workout"
+
+    wp_gym = client.post(
+        "/api/v1/workout-plans/generate",
+        json={"week_start": "2026-11-09", "equipment_access": "gym_full"},
+    ).json()
+    assert wp_gym["equipment_access"] == "gym_full"
+    assert any(ex["equipment"] in ("gym", "dumbbell") for s in wp_gym["sessions"] for ex in s["exercises"])

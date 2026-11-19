@@ -1,29 +1,50 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiFetch, ApiClientError } from "@/lib/api";
+import {
+  CatalogExercise,
+  EQUIPMENT_META,
+  ExerciseEquipment,
+  ExerciseModeFilter,
+  filterExercises,
+  formatMuscleLabel,
+  formatPatternLabel,
+  formatRepRange,
+  MUSCLE_GROUP_LABELS,
+  PATTERN_LABELS,
+} from "@/lib/exercises";
 import { ErrorBanner } from "@/components/StatusWidgets";
 
 export default function AdminExercisesPage() {
-  const [exercises, setExercises] = useState<any[]>([]);
+  const [exercises, setExercises] = useState<CatalogExercise[]>([]);
   const [code, setCode] = useState("");
-  const [nameId, setNameId] = useState("");
-  const [pattern, setPattern] = useState<
-    "squat" | "hinge" | "horizontal_push" | "vertical_push" | "horizontal_pull" | "vertical_pull" | "core" | "accessory"
-  >("accessory");
-  const [primaryMuscle, setPrimaryMuscle] = useState("biceps");
-  const [equipment, setEquipment] = useState("dumbbell");
-  const [instructionsId, setInstructionsId] = useState(
-    "Berdiri tegak, jaga siku di samping tubuh, angkat beban terkendali dan turunkan perlahan.",
+  const [name, setName] = useState("");
+  const [pattern, setPattern] = useState<string>("horizontal_push");
+  const [muscleGroup, setMuscleGroup] = useState("chest");
+  const [equipment, setEquipment] = useState<ExerciseEquipment>("gym");
+  const [difficulty, setDifficulty] = useState<1 | 2>(1);
+  const [sets, setSets] = useState(3);
+  const [repsMin, setRepsMin] = useState(8);
+  const [repsMax, setRepsMax] = useState(12);
+  const [unit, setUnit] = useState<"reps" | "seconds">("reps");
+  const [restS, setRestS] = useState(60);
+  const [instructions, setInstructions] = useState(
+    "Jaga postur tubuh netral, lakukan gerakan terkontrol sesuai rentang gerak aman, dan atur pernapasan.",
   );
   const [reason, setReason] = useState("Penambahan variasi gerakan latihan katalog");
+
+  // Catalog filters
+  const [listMode, setListMode] = useState<ExerciseModeFilter>("all");
+  const [listSearch, setListSearch] = useState("");
+
   const [banner, setBanner] = useState<string | null>(null);
   const [error, setError] = useState<{ msg: string; reqId?: string } | null>(null);
 
   const loadExercises = useCallback(async () => {
     try {
-      const res = await apiFetch<{ items: any[] }>("/exercises");
+      const res = await apiFetch<{ items: CatalogExercise[] }>("/exercises");
       setExercises(res.items || []);
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -36,6 +57,17 @@ export default function AdminExercisesPage() {
     loadExercises();
   }, [loadExercises]);
 
+  const filteredList = useMemo(
+    () =>
+      filterExercises(exercises, {
+        mode: listMode,
+        gymSub: "all_gym",
+        workoutSub: "bodyweight_only",
+        search: listSearch,
+      }),
+    [exercises, listMode, listSearch],
+  );
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -45,16 +77,23 @@ export default function AdminExercisesPage() {
         method: "POST",
         body: JSON.stringify({
           code: code.toUpperCase().trim(),
-          name_id: nameId.trim(),
-          movement_pattern: pattern,
-          primary_muscle: primaryMuscle,
-          equipment_required: [equipment],
-          instructions_id: instructionsId,
-          reason,
+          name: name.trim(),
+          pattern,
+          muscle_group: muscleGroup,
+          equipment,
+          difficulty: Number(difficulty),
+          rank: 50,
+          sets: Number(sets),
+          reps_min: Number(repsMin),
+          reps_max: Number(repsMax),
+          unit,
+          rest_s: Number(restS),
+          instructions: instructions.trim(),
+          reason: reason.trim(),
         }),
       });
       setCode("");
-      setNameId("");
+      setName("");
       setBanner("Gerakan latihan baru berhasil disimpan & tercatat di audit log.");
       await loadExercises();
     } catch (err) {
@@ -68,8 +107,10 @@ export default function AdminExercisesPage() {
     <div className="space-y-6">
       <div className="route-intro flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-content">Katalog latihan</h1>
-          <p className="text-sm text-muted">Kelola daftar gerakan latihan, pola gerak, dan kontraindikasi cedera.</p>
+          <h1 className="text-2xl font-bold text-content">Katalog latihan (Gym &amp; Workout)</h1>
+          <p className="text-sm text-muted">
+            Kelola daftar gerakan Gym dan Workout rumahan, pola gerak, target set/repetisi, serta instruksi aman.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold">
           <Link href="/admin/foods" className="rounded-lg border border-line-strong bg-panel px-3 py-1.5">
@@ -98,8 +139,23 @@ export default function AdminExercisesPage() {
         >
           <h2 className="text-base font-bold text-content">Tambah Gerakan Baru</h2>
           <div>
+            <label htmlFor="ex-eq" className="block text-xs font-semibold text-secondary">
+              Kategori / Peralatan (Gym vs Workout)
+            </label>
+            <select
+              id="ex-eq"
+              value={equipment}
+              onChange={(e) => setEquipment(e.target.value as ExerciseEquipment)}
+              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
+            >
+              <option value="gym">Gym — Barbell / Mesin / Cable</option>
+              <option value="bodyweight">Workout — Tanpa Alat (Bodyweight / Rumahan)</option>
+              <option value="dumbbell">Dumbbell — Bisa di Gym &amp; Rumahan</option>
+            </select>
+          </div>
+          <div>
             <label htmlFor="ex-code" className="block text-xs font-semibold text-secondary">
-              Kode Unik (UPPER_SNAKE)
+              Kode Unik
             </label>
             <input
               id="ex-code"
@@ -107,7 +163,7 @@ export default function AdminExercisesPage() {
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Contoh: HAMMER_CURL_DB"
+              placeholder="Contoh: EX191"
               className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
@@ -119,73 +175,147 @@ export default function AdminExercisesPage() {
               id="ex-name"
               type="text"
               required
-              value={nameId}
-              onChange={(e) => setNameId(e.target.value)}
-              placeholder="Contoh: Dumbbell Hammer Curl"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Incline Cable Fly"
               className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
             />
           </div>
-          <div>
-            <label htmlFor="ex-pat" className="block text-xs font-semibold text-secondary">
-              Pola Gerakan
-            </label>
-            <select
-              id="ex-pat"
-              value={pattern}
-              onChange={(e) => setPattern(e.target.value as any)}
-              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
-            >
-              <option value="squat">Squat</option>
-              <option value="hinge">Hinge</option>
-              <option value="horizontal_push">Horizontal Push</option>
-              <option value="vertical_push">Vertical Push</option>
-              <option value="horizontal_pull">Horizontal Pull</option>
-              <option value="vertical_pull">Vertical Pull</option>
-              <option value="core">Core</option>
-              <option value="accessory">Accessory</option>
-            </select>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label htmlFor="ex-pat" className="block text-xs font-semibold text-secondary">
+                Pola Gerakan
+              </label>
+              <select
+                id="ex-pat"
+                value={pattern}
+                onChange={(e) => setPattern(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2.5 py-1.5 text-xs sm:text-sm"
+              >
+                {Object.entries(PATTERN_LABELS).map(([k, label]) => (
+                  <option key={k} value={k}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ex-muscle" className="block text-xs font-semibold text-secondary">
+                Kelompok Otot
+              </label>
+              <select
+                id="ex-muscle"
+                value={muscleGroup}
+                onChange={(e) => setMuscleGroup(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2.5 py-1.5 text-xs sm:text-sm"
+              >
+                {Object.entries(MUSCLE_GROUP_LABELS).map(([k, label]) => (
+                  <option key={k} value={k}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label htmlFor="ex-muscle" className="block text-xs font-semibold text-secondary">
-              Otot Utama
-            </label>
-            <input
-              id="ex-muscle"
-              type="text"
-              required
-              value={primaryMuscle}
-              onChange={(e) => setPrimaryMuscle(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label htmlFor="ex-diff" className="block text-xs font-semibold text-secondary">
+                Kesulitan
+              </label>
+              <select
+                id="ex-diff"
+                value={difficulty}
+                onChange={(e) => setDifficulty(Number(e.target.value) as 1 | 2)}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2.5 py-1.5 text-xs sm:text-sm"
+              >
+                <option value={1}>Pemula (1)</option>
+                <option value={2}>Menengah (2)</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ex-unit" className="block text-xs font-semibold text-secondary">
+                Satuan
+              </label>
+              <select
+                id="ex-unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as "reps" | "seconds")}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2.5 py-1.5 text-xs sm:text-sm"
+              >
+                <option value="reps">Repetisi (reps)</option>
+                <option value="seconds">Durasi (seconds)</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label htmlFor="ex-eq" className="block text-xs font-semibold text-secondary">
-              Peralatan
-            </label>
-            <select
-              id="ex-eq"
-              value={equipment}
-              onChange={(e) => setEquipment(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-sm"
-            >
-              <option value="bodyweight">Tanpa Alat (bodyweight)</option>
-              <option value="dumbbell">Dumbbell</option>
-              <option value="resistance_band">Resistance Band</option>
-              <option value="pullup_bar">Pull-up Bar</option>
-              <option value="full_gym">Gym Lengkap (full_gym)</option>
-            </select>
+          <div className="grid grid-cols-4 gap-2">
+            <div>
+              <label htmlFor="ex-sets" className="block text-[11px] font-semibold text-secondary">
+                Set
+              </label>
+              <input
+                id="ex-sets"
+                type="number"
+                min={1}
+                max={10}
+                value={sets}
+                onChange={(e) => setSets(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1.5 text-xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="ex-rmin" className="block text-[11px] font-semibold text-secondary">
+                Min
+              </label>
+              <input
+                id="ex-rmin"
+                type="number"
+                min={1}
+                max={600}
+                value={repsMin}
+                onChange={(e) => setRepsMin(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1.5 text-xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="ex-rmax" className="block text-[11px] font-semibold text-secondary">
+                Max
+              </label>
+              <input
+                id="ex-rmax"
+                type="number"
+                min={1}
+                max={600}
+                value={repsMax}
+                onChange={(e) => setRepsMax(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1.5 text-xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="ex-rest" className="block text-[11px] font-semibold text-secondary">
+                Istirahat
+              </label>
+              <input
+                id="ex-rest"
+                type="number"
+                min={10}
+                max={300}
+                value={restS}
+                onChange={(e) => setRestS(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-line-strong px-2 py-1.5 text-xs"
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="ex-inst" className="block text-xs font-semibold text-secondary">
-              Instruksi Aman (min. 10 karakter)
+              Instruksi Aman
             </label>
             <textarea
               id="ex-inst"
               rows={2}
               required
               minLength={10}
-              value={instructionsId}
-              onChange={(e) => setInstructionsId(e.target.value)}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
               className="mt-1 w-full rounded-lg border border-line-strong px-3 py-1.5 text-xs"
             />
           </div>
@@ -210,30 +340,69 @@ export default function AdminExercisesPage() {
           </button>
         </form>
 
-        <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm overflow-x-auto">
-          <h2 className="text-base font-bold text-content mb-3">Daftar Katalog Latihan ({exercises.length})</h2>
+        <div className="lg:col-span-2 rounded-xl border border-line bg-panel p-5 shadow-sm space-y-3 overflow-x-auto">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-content">
+              Daftar Katalog Latihan ({filteredList.length} / {exercises.length})
+            </h2>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(["all", "gym", "workout"] as ExerciseModeFilter[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setListMode(m)}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                    listMode === m
+                      ? "border-accent-line bg-accent-soft text-accent-ink"
+                      : "border-line bg-inset text-muted"
+                  }`}
+                >
+                  {m === "all" ? "Semua" : m === "gym" ? "Gym" : "Workout"}
+                </button>
+              ))}
+              <input
+                type="text"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                placeholder="Cari gerakan..."
+                className="rounded-lg border border-line-strong px-2.5 py-1 text-xs"
+              />
+            </div>
+          </div>
+
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-line text-muted">
                 <th className="py-2">Kode</th>
                 <th className="py-2">Nama</th>
-                <th className="py-2">Pola</th>
+                <th className="py-2">Kategori</th>
                 <th className="py-2">Otot</th>
-                <th className="py-2">Alat</th>
-                <th className="py-2">Kontraindikasi</th>
+                <th className="py-2">Pola</th>
+                <th className="py-2">Target</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {exercises.map((ex) => (
-                <tr key={ex.id}>
-                  <td className="py-2 font-mono">{ex.code}</td>
-                  <td className="py-2 font-medium">{ex.name_id}</td>
-                  <td className="py-2">{ex.movement_pattern}</td>
-                  <td className="py-2">{ex.primary_muscle}</td>
-                  <td className="py-2">{(ex.equipment_required || []).join(", ")}</td>
-                  <td className="py-2 text-danger">{(ex.contraindications || []).join(", ") || "-"}</td>
-                </tr>
-              ))}
+              {filteredList.map((ex) => {
+                const eqMeta = EQUIPMENT_META[ex.equipment] || EQUIPMENT_META.gym;
+                return (
+                  <tr key={ex.id}>
+                    <td className="py-2 font-mono">{ex.code}</td>
+                    <td className="py-2 font-medium text-content">{ex.name}</td>
+                    <td className="py-2">
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${eqMeta.badgeClass}`}
+                      >
+                        {eqMeta.badge}
+                      </span>
+                    </td>
+                    <td className="py-2">{formatMuscleLabel(ex.muscle_group)}</td>
+                    <td className="py-2">{formatPatternLabel(ex.pattern)}</td>
+                    <td className="py-2 text-secondary">
+                      {ex.sets}× {formatRepRange(ex)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -241,4 +410,3 @@ export default function AdminExercisesPage() {
     </div>
   );
 }
-
