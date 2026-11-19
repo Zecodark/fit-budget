@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: fitbudget
+      POSTGRES_PASSWORD: fitbudget
+      POSTGRES_DB: fitbudget
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fitbudget"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./apps/api
+    env_file: .env
+    volumes:
+      - ./data/seeds:/app/data/seeds:ro
+    environment:
+      SEED_DIR: /app/data/seeds
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  web:
+    build: ./apps/web
+    env_file: .env
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  ollama:
+    image: ollama/ollama
+    profiles: ["ai"]
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+
+volumes:
+  dbdata: {}
+  ollama: {}
+

@@ -1,0 +1,27 @@
+code,name,food_group,slots,package_g,price_idr,edible_pct,kcal_100g,protein_100g,fat_100g,carb_100g,step_g,min_g,max_g,max_days_wk
+BERAS,Beras putih (mentah),carb,BLD,1000,16000,100,360,6.8,0.6,79.0,10,30,450,7
+UBIJ,Ubi jalar (mentah),carb,BLDS,1000,12000,85,86,1.6,0.1,20.1,10,50,400,4
+SING,Singkong (mentah),carb,LD,1000,6000,85,160,1.4,0.3,38.1,10,50,400,4
+KENT,Kentang (mentah),carb,LD,1000,18000,90,77,2.0,0.1,17.5,10,50,400,4
+OAT,Oat gulung,carb,BS,500,22000,100,379,13.2,6.5,67.7,10,30,100,5
+ROTI,Roti tawar,carb,BS,400,15000,100,265,9.0,3.2,49.0,10,30,160,4
+DADA,Dada ayam tanpa kulit (mentah),protein_animal,BLD,1000,38000,100,120,22.5,2.6,0.0,10,50,300,5
+PAHA,Paha ayam tanpa kulit (mentah),protein_animal,LD,1000,34000,100,120,19.5,4.0,0.0,10,50,300,5
+TELU,Telur ayam (1 butir ≈ 50 g bersih),protein_animal,BLD,1000,28000,88,143,12.6,9.5,0.7,50,50,300,5
+LELE,Ikan lele (utuh),protein_animal,LD,1000,28000,65,95,16.4,2.8,0.0,10,50,250,3
+TONG,Ikan tongkol (mentah),protein_animal,LD,1000,32000,80,103,22.0,1.0,0.0,10,50,250,3
+TEMP,Tempe,protein_plant,BLD,1000,22000,100,192,20.3,10.8,7.6,10,30,250,6
+TAHU,Tahu putih,protein_plant,BLD,1000,14000,100,76,8.1,4.8,1.9,10,50,300,6
+KHIJ,Kacang hijau kering,protein_plant,LD,1000,28000,100,347,23.9,1.2,62.6,10,20,80,3
+KTAN,Kacang tanah (mentah),protein_plant,S,1000,32000,100,567,25.8,49.2,16.1,10,10,40,3
+SUSU,Susu UHT full cream,dairy,BS,1000,20000,100,61,3.2,3.3,4.8,50,100,500,7
+BAYA,Bayam,vegetable,LD,1000,12000,90,23,2.9,0.4,3.6,10,50,150,4
+KANG,Kangkung,vegetable,LD,1000,8000,70,19,2.6,0.2,3.1,10,50,150,4
+WORT,Wortel,vegetable,LD,1000,12000,90,41,0.9,0.2,9.6,10,50,150,4
+KOL,Kol / kubis,vegetable,LD,1000,8000,85,25,1.3,0.1,5.8,10,50,200,4
+BUNC,Buncis,vegetable,LD,1000,18000,90,31,1.8,0.2,7.0,10,50,150,4
+TOMA,Tomat,vegetable,BLD,1000,14000,95,18,0.9,0.2,3.9,10,50,150,5
+SAWI,Sawi hijau,vegetable,LD,1000,10000,85,27,2.9,0.4,4.7,10,50,150,4
+PISA,Pisang,fruit,BS,1000,15000,65,89,1.1,0.3,22.8,10,50,250,7
+MINY,Minyak goreng,fat,LD,1000,20000,100,884,0.0,100.0,0.0,5,5,30,7
+

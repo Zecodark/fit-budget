@@ -1,0 +1,27 @@
+food_code,region,package_g,price_idr,source,recorded_at
+BERAS,default,1000,16000,harga ilustratif seed,2026-11-01
+UBIJ,default,1000,12000,harga ilustratif seed,2026-11-01
+SING,default,1000,6000,harga ilustratif seed,2026-11-01
+KENT,default,1000,18000,harga ilustratif seed,2026-11-01
+OAT,default,500,22000,harga ilustratif seed,2026-11-01
+ROTI,default,400,15000,harga ilustratif seed,2026-11-01
+DADA,default,1000,38000,harga ilustratif seed,2026-11-01
+PAHA,default,1000,34000,harga ilustratif seed,2026-11-01
+TELU,default,1000,28000,harga ilustratif seed,2026-11-01
+LELE,default,1000,28000,harga ilustratif seed,2026-11-01
+TONG,default,1000,32000,harga ilustratif seed,2026-11-01
+TEMP,default,1000,22000,harga ilustratif seed,2026-11-01
+TAHU,default,1000,14000,harga ilustratif seed,2026-11-01
+KHIJ,default,1000,28000,harga ilustratif seed,2026-11-01
+KTAN,default,1000,32000,harga ilustratif seed,2026-11-01
+SUSU,default,1000,20000,harga ilustratif seed,2026-11-01
+BAYA,default,1000,12000,harga ilustratif seed,2026-11-01
+KANG,default,1000,8000,harga ilustratif seed,2026-11-01
+WORT,default,1000,12000,harga ilustratif seed,2026-11-01
+KOL,default,1000,8000,harga ilustratif seed,2026-11-01
+BUNC,default,1000,18000,harga ilustratif seed,2026-11-01
+TOMA,default,1000,14000,harga ilustratif seed,2026-11-01
+SAWI,default,1000,10000,harga ilustratif seed,2026-11-01
+PISA,default,1000,15000,harga ilustratif seed,2026-11-01
+MINY,default,1000,20000,harga ilustratif seed,2026-11-01
+
