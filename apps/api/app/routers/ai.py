@@ -1,15 +1,16 @@
-"""AI chat, status, history, and proposal endpoints (PRD §6.3–6.8)."""
+"""AI chat, status, session management, history, and proposal endpoints (PRD §6.3–6.8)."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy import desc, func, select
+from fastapi import APIRouter, Depends, Request, Response
+from sqlalchemy import delete, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -22,16 +23,20 @@ from app.schemas import ChatRequest, ConfirmVersionRequest
 from app.services.ai.context import build_context
 from app.services.ai.guardrails import (
     check_number_whitelist,
+    extract_numbers,
     has_banned_output,
     matches_safety_keyword,
 )
 from app.services.ai.prompts import (
     SAFETY_RESPONSE_TEXT,
     SYSTEM_PROMPT,
+    VALID_INTENTS,
     LLMResponse,
+    explain_greeting,
     explain_meal_plan,
     explain_nutrition,
     explain_prices,
+    explain_progress,
     explain_workout,
 )
 from app.services.ai.proposals import (
@@ -51,6 +56,11 @@ log = get_logger("ai")
 
 _consecutive_fails: int = 0
 _circuit_open_until: float = 0.0
+
+_GREETING_FALLBACK_RE = re.compile(
+    r"^(?:hai+|halo+|hello+|hi+|hey+|p+|pagi|selamat\s+(?:pagi|siang|sore|malam)|assalamu'?alaikum|makasih|terima\s+kasih|thanks?)$",
+    re.IGNORECASE,
+)
 
 
 def reset_circuit_breaker() -> None:
@@ -72,14 +82,78 @@ def _record_success() -> None:
     _consecutive_fails = 0
 
 
-def _fallback_template(intent: str, ctx: dict[str, Any], user_msg: str) -> str:
-    if intent == "explain_workout":
-        return explain_workout(ctx)
-    if intent == "explain_nutrition":
-        return explain_nutrition(ctx)
-    if intent == "price_question":
-        return explain_prices(ctx, user_msg)
-    return explain_meal_plan(ctx)
+def _fallback_template(intent: str | None, ctx: dict[str, Any], user_msg: str) -> tuple[str, str]:
+    low = (user_msg or "").strip().lower()
+    if intent == "general_chat" or _GREETING_FALLBACK_RE.match(low.strip("!?., ")):
+        return "general_chat", explain_greeting(ctx)
+    if intent == "explain_workout" or (not intent and any(k in low for k in ("latihan", "gym", "workout", "sesi"))):
+        return "explain_workout", explain_workout(ctx)
+    if intent == "explain_progress" or (not intent and any(k in low for k in ("progres", "progress", "catatan", "riwayat", "tracker"))):
+        return "explain_progress", explain_progress(ctx)
+    if intent == "explain_nutrition" or (not intent and any(k in low for k in ("kalori", "protein", "tdee", "ree", "nutrisi"))):
+        return "explain_nutrition", explain_nutrition(ctx)
+    if intent == "price_question" or (not intent and "harga" in low):
+        return "price_question", explain_prices(ctx, user_msg)
+    return intent or "explain_plan", explain_meal_plan(ctx)
+
+
+def _normalize_llm_payload(raw: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        return raw
+    explanation = raw.get("explanation")
+    if not isinstance(explanation, str) or not explanation.strip():
+        for alt_key in ("response", "message", "reply", "answer", "text", "content"):
+            val = raw.get(alt_key)
+            if isinstance(val, str) and val.strip():
+                explanation = val.strip()
+                break
+    if not isinstance(explanation, str) or not explanation.strip():
+        return raw  # let Pydantic fail so invalid_output is recorded
+
+    raw_intent = raw.get("intent")
+    intent = raw_intent if isinstance(raw_intent, str) and raw_intent in VALID_INTENTS else "general_chat"
+
+    raw_changes = raw.get("proposed_changes")
+    changes: list[dict[str, Any]] = []
+    if isinstance(raw_changes, list):
+        for ch in raw_changes[:1]:
+            if isinstance(ch, dict) and ch.get("type") in ("change_budget", "exclude_food", "reschedule_workout"):
+                p = ch.get("params") if isinstance(ch.get("params"), dict) else {}
+                clean_p = {k: v for k, v in p.items() if v is not None and v != ""}
+                changes.append({"type": ch["type"], "params": clean_p})
+
+    def _str_list(v: Any) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [str(x) for x in v if x is not None and str(x).strip()]
+
+    return {
+        "intent": intent,
+        "explanation": explanation.strip()[:2500],
+        "proposed_changes": changes,
+        "references": _str_list(raw.get("references")),
+        "warnings": _str_list(raw.get("warnings")),
+        "missing_params": _str_list(raw.get("missing_params")),
+    }
+
+
+def _context_fingerprint(ctx: dict[str, Any]) -> str:
+    mp = ctx.get("meal_plan") or {}
+    wp = ctx.get("workout_plan") or {}
+    prog = ctx.get("recent_progress") or {}
+    pref = ctx.get("preferences") or {}
+    sig = {
+        "mp_v": mp.get("version", 0),
+        "mp_s": mp.get("status"),
+        "wp_v": wp.get("version", 0),
+        "wp_s": wp.get("status"),
+        "eq": pref.get("equipment_access"),
+        "b": (ctx.get("targets") or {}).get("daily_budget_idr"),
+        "fl": len(prog.get("food_logs_by_day") or []),
+        "wl": len(prog.get("workout_logs") or []),
+        "wt": (prog.get("weight_trend") or {}).get("logs_count", 0),
+    }
+    return hashlib.sha256(json.dumps(sig, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def _log_interaction(
@@ -218,16 +292,23 @@ async def post_chat(
             "candidates": [],
         }
 
-    # Step 6: build whitelisted context
+    # Step 6: build whitelisted, multi-segment user context
     ctx = build_context(db, user.id)
-    mp_v = (ctx.get("meal_plan") or {}).get("version", 0)
-    wp_v = (ctx.get("workout_plan") or {}).get("version", 0)
+    ctx_fp = _context_fingerprint(ctx)
     norm_msg = " ".join(user_text.lower().split())
-    cache_key = hashlib.sha256(f"{user.id}:{mp_v}:{wp_v}:{norm_msg}".encode()).hexdigest()
+    cache_key = hashlib.sha256(f"v2:{user.id}:{ctx_fp}:{norm_msg}".encode()).hexdigest()
 
-    # Step 5: cache lookup for pure explanation repeats
-    cached = db.get(AICache, cache_key)
-    if cached:
+    # Step 5: cache lookup for pure factual explanation repeats (only if no prior history context makes it follow-up)
+    hist_rows = db.scalars(
+        select(ChatMessage)
+        .where(ChatMessage.user_id == user.id, ChatMessage.conversation_id == conv_id)
+        .order_by(desc(ChatMessage.created_at))
+        .limit(s.ai_max_history_messages)
+    ).all()
+    hist_msgs = [{"role": r.role, "content": r.content} for r in reversed(hist_rows)]
+
+    cached = db.get(AICache, cache_key) if len(hist_msgs) == 0 else None
+    if cached and (cached.response_json or {}).get("explanation_source") == "llm":
         payload = cached.response_json
         db.add(ChatMessage(id=new_id(), user_id=user.id, conversation_id=conv_id, role="user", content=user_text))
         asst = ChatMessage(
@@ -237,7 +318,7 @@ async def post_chat(
             role="assistant",
             content=payload["content"],
             intent=payload["intent"],
-            meta_json=payload.get("meta", {}),
+            meta_json=payload.get("meta", {"explanation_source": "llm", "references": payload.get("references", [])}),
         )
         db.add(asst)
         _log_interaction(
@@ -268,18 +349,11 @@ async def post_chat(
             "candidates": [],
         }
 
-    # History (<= AI_MAX_HISTORY_MESSAGES)
-    hist_rows = db.scalars(
-        select(ChatMessage)
-        .where(ChatMessage.user_id == user.id, ChatMessage.conversation_id == conv_id)
-        .order_by(desc(ChatMessage.created_at))
-        .limit(s.ai_max_history_messages)
-    ).all()
-    hist_msgs = [{"role": r.role, "content": r.content} for r in reversed(hist_rows)]
-
+    # Omit facts_numbers from LLM prompt payload to save tokens and reduce noise
+    llm_ctx = {k: v for k, v in ctx.items() if k != "facts_numbers"}
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "system", "content": "KONTEKS_JSON:\n" + json.dumps(ctx, ensure_ascii=False)},
+        {"role": "system", "content": "KONTEKS_JSON:\n" + json.dumps(llm_ctx, ensure_ascii=False)},
         *hist_msgs,
         {"role": "user", "content": user_text},
     ]
@@ -322,19 +396,19 @@ async def post_chat(
         db.commit()
         raise AppError("AI_UNAVAILABLE") from exc
     except AIInvalidOutput:
+        fb_intent, fallback_text = _fallback_template(None, ctx, user_text)
         _log_interaction(
             db,
             user_id=user.id,
             provider=provider.name,
             model=provider.model,
-            intent="explain_plan",
+            intent=fb_intent,
             status="invalid_output",
             latency_ms=0,
             tokens_in=None,
             tokens_out=None,
             request_id=req_id,
         )
-        fallback_text = explain_meal_plan(ctx)
         db.add(ChatMessage(id=new_id(), user_id=user.id, conversation_id=conv_id, role="user", content=user_text))
         asst = ChatMessage(
             id=new_id(),
@@ -342,7 +416,7 @@ async def post_chat(
             conversation_id=conv_id,
             role="assistant",
             content=fallback_text,
-            intent="explain_plan",
+            intent=fb_intent,
             meta_json={"explanation_source": "template"},
         )
         db.add(asst)
@@ -353,9 +427,9 @@ async def post_chat(
                 "id": asst.id,
                 "role": "assistant",
                 "content": fallback_text,
-                "intent": "explain_plan",
+                "intent": fb_intent,
                 "explanation_source": "template",
-                "references": ["meal_plan", "targets"],
+                "references": [],
                 "warnings": [],
             },
             "proposal": None,
@@ -363,23 +437,24 @@ async def post_chat(
             "candidates": [],
         }
 
-    # Step 8: validate Pydantic schema
+    # Step 8: normalize & validate Pydantic schema
     try:
-        llm_out = LLMResponse.model_validate(res.parsed)
+        normalized = _normalize_llm_payload(res.parsed)
+        llm_out = LLMResponse.model_validate(normalized)
     except Exception:
+        fb_intent, fallback_text = _fallback_template(None, ctx, user_text)
         _log_interaction(
             db,
             user_id=user.id,
             provider=provider.name,
             model=provider.model,
-            intent="explain_plan",
+            intent=fb_intent,
             status="invalid_output",
             latency_ms=res.latency_ms,
             tokens_in=res.tokens_in,
             tokens_out=res.tokens_out,
             request_id=req_id,
         )
-        fallback_text = explain_meal_plan(ctx)
         db.add(ChatMessage(id=new_id(), user_id=user.id, conversation_id=conv_id, role="user", content=user_text))
         asst = ChatMessage(
             id=new_id(),
@@ -387,7 +462,7 @@ async def post_chat(
             conversation_id=conv_id,
             role="assistant",
             content=fallback_text,
-            intent="explain_plan",
+            intent=fb_intent,
             meta_json={"explanation_source": "template"},
         )
         db.add(asst)
@@ -398,9 +473,9 @@ async def post_chat(
                 "id": asst.id,
                 "role": "assistant",
                 "content": fallback_text,
-                "intent": "explain_plan",
+                "intent": fb_intent,
                 "explanation_source": "template",
-                "references": ["meal_plan", "targets"],
+                "references": [],
                 "warnings": [],
             },
             "proposal": None,
@@ -418,7 +493,7 @@ async def post_chat(
     proposal_obj: AIProposal | None = None
 
     # Resolve proposal parameters first (may add proposal numbers to whitelist or downgrade to clarification_needed)
-    extra_facts: list[float] = []
+    extra_facts: list[float] = list(extract_numbers(user_text))
     if llm_out.proposed_changes:
         pc = llm_out.proposed_changes[0]
         if pc.type == "change_budget" and isinstance(pc.params.get("daily_budget_idr"), int):
@@ -443,7 +518,7 @@ async def post_chat(
     elif explanation_source == "llm" and not check_number_whitelist(
         explanation, list(ctx["facts_numbers"]) + extra_facts
     ):
-        explanation = _fallback_template(intent, ctx, user_text)
+        intent, explanation = _fallback_template(intent, ctx, user_text)
         explanation_source = "template"
         interaction_status = "fallback_template"
 
@@ -471,7 +546,13 @@ async def post_chat(
         request_id=req_id,
     )
 
-    if proposal_obj is None and intent in ("explain_plan", "explain_nutrition", "explain_workout", "price_question"):
+    if (
+        len(hist_msgs) == 0
+        and proposal_obj is None
+        and interaction_status == "ok"
+        and explanation_source == "llm"
+        and intent in ("explain_plan", "explain_nutrition", "explain_workout", "explain_progress", "price_question")
+    ):
         if not db.get(AICache, cache_key):
             db.add(
                 AICache(
@@ -503,6 +584,54 @@ async def post_chat(
         "missing_params": missing_params,
         "candidates": candidates,
     }
+
+
+@router.get("/conversations")
+def list_conversations(
+    user: User = Depends(require_consent),
+    db: Session = Depends(get_db),
+) -> dict:
+    msgs = db.scalars(
+        select(ChatMessage).where(ChatMessage.user_id == user.id).order_by(ChatMessage.created_at)
+    ).all()
+    sessions: dict[str, dict[str, Any]] = {}
+    for m in msgs:
+        s = sessions.get(m.conversation_id)
+        if not s:
+            s = {
+                "conversation_id": m.conversation_id,
+                "title": m.content[:60] if m.role == "user" else "Sesi Percakapan",
+                "first_user_set": m.role == "user",
+                "message_count": 0,
+                "last_message_at": m.created_at.isoformat(),
+                "last_preview": m.content[:90],
+            }
+            sessions[m.conversation_id] = s
+        elif not s["first_user_set"] and m.role == "user":
+            s["title"] = m.content[:60]
+            s["first_user_set"] = True
+        s["message_count"] += 1
+        s["last_message_at"] = m.created_at.isoformat()
+        s["last_preview"] = m.content[:90]
+
+    items = [
+        {k: v for k, v in s.items() if k != "first_user_set"}
+        for s in sorted(sessions.values(), key=lambda x: x["last_message_at"], reverse=True)
+    ]
+    return {"items": items, "total": len(items)}
+
+
+@router.delete("/conversations/{conversation_id}", status_code=204)
+def delete_conversation(
+    conversation_id: str,
+    user: User = Depends(require_consent),
+    db: Session = Depends(get_db),
+) -> Response:
+    db.execute(
+        delete(ChatMessage).where(ChatMessage.user_id == user.id, ChatMessage.conversation_id == conversation_id)
+    )
+    db.flush()
+    return Response(status_code=204)
 
 
 @router.get("/history")
@@ -562,4 +691,3 @@ def reject_proposal_endpoint(
     prop.resolved_at = datetime.now(UTC)
     db.flush()
     return {"proposal": serialize_proposal(prop)}
-

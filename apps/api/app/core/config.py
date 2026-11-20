@@ -35,9 +35,9 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash-lite"
     ai_timeout_seconds: float = 30
-    ai_rate_limit_per_hour: int = 10
-    ai_max_history_messages: int = 6
-    ai_max_output_tokens: int = 600
+    ai_rate_limit_per_hour: int = 30
+    ai_max_history_messages: int = 12
+    ai_max_output_tokens: int = 1024
     ai_circuit_fails: int = 3
     ai_circuit_open_seconds: int = 60
 

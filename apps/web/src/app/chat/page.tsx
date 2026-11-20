@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiFetch, ApiClientError } from "@/lib/api";
 import { ErrorBanner, ProposalCard, ProposalData } from "@/components/StatusWidgets";
@@ -9,8 +9,18 @@ interface ChatMessageItem {
   id: string;
   role: "user" | "assistant";
   content: string;
+  intent?: string | null;
+  explanation_source?: string;
   conversation_id: string;
   created_at: string;
+}
+
+interface ConversationSummary {
+  conversation_id: string;
+  title: string;
+  message_count: number;
+  last_message_at: string;
+  last_preview: string;
 }
 
 interface AiStatus {
@@ -19,8 +29,20 @@ interface AiStatus {
   degraded_reason: string | null;
 }
 
+const QUICK_PROMPTS = [
+  "Halo, bisa bantu apa saja?",
+  "Jelaskan rencana makan dan target nutrisi saya saat ini.",
+  "Jelaskan jadwal latihan Gym / Workout saya minggu ini.",
+  "Bagaimana progres makan, latihan, dan berat badan saya 7 hari terakhir?",
+  "Saya alergi telur, tolong ganti telur dari rencana makan saya.",
+  "Ubah budget harian saya menjadi Rp 45.000.",
+];
+
 export default function ChatPage() {
   const [status, setStatus] = useState<AiStatus | null>(null);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [isNewSession, setIsNewSession] = useState(false);
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [proposals, setProposals] = useState<ProposalData[]>([]);
   const [input, setInput] = useState("");
@@ -28,26 +50,109 @@ export default function ChatPage() {
   const [busyProposalId, setBusyProposalId] = useState<string | null>(null);
   const [error, setError] = useState<{ msg: string; code?: string; reqId?: string } | null>(null);
   const [actionBanner, setActionBanner] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
-  const loadChat = useCallback(async () => {
+  const loadSessionHistory = useCallback(async (convId: string | null) => {
+    if (!convId) {
+      setMessages([]);
+      setProposals([]);
+      return;
+    }
+    const history = await apiFetch<{ items: ChatMessageItem[]; proposals: ProposalData[] }>(
+      `/ai/history?conversation_id=${encodeURIComponent(convId)}`,
+    );
+    setMessages(history.items || []);
+    setProposals(history.proposals || []);
+  }, []);
+
+  const loadChat = useCallback(
+    async (preferredConvId?: string | null, forceNew = false) => {
+      try {
+        const [st, convRes] = await Promise.all([
+          apiFetch<AiStatus>("/ai/status"),
+          apiFetch<{ items: ConversationSummary[] }>("/ai/conversations").catch(() => ({ items: [] })),
+        ]);
+        setStatus(st);
+        const list = convRes.items || [];
+        setConversations(list);
+
+        if (forceNew) {
+          setIsNewSession(true);
+          setActiveConvId(null);
+          setMessages([]);
+          setProposals([]);
+          return;
+        }
+
+        const targetId =
+          preferredConvId !== undefined
+            ? preferredConvId
+            : activeConvId && list.some((c) => c.conversation_id === activeConvId)
+              ? activeConvId
+              : list[0]?.conversation_id || null;
+
+        setIsNewSession(targetId === null);
+        setActiveConvId(targetId);
+        await loadSessionHistory(targetId);
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          setError({ msg: err.message, code: err.code, reqId: err.requestId });
+        }
+      }
+    },
+    [activeConvId, loadSessionHistory],
+  );
+
+  useEffect(() => {
+    loadChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const handleSelectSession = async (convId: string) => {
+    setError(null);
+    setActionBanner(null);
+    setIsNewSession(false);
+    setActiveConvId(convId);
     try {
-      const [st, history] = await Promise.all([
-        apiFetch<AiStatus>("/ai/status"),
-        apiFetch<{ items: ChatMessageItem[]; proposals: ProposalData[] }>("/ai/history"),
-      ]);
-      setStatus(st);
-      setMessages(history.items);
-      setProposals(history.proposals);
+      await loadSessionHistory(convId);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, code: err.code, reqId: err.requestId });
       }
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    loadChat();
-  }, [loadChat]);
+  const handleNewSession = () => {
+    setError(null);
+    setActionBanner(null);
+    setIsNewSession(true);
+    setActiveConvId(null);
+    setMessages([]);
+    setProposals([]);
+  };
+
+  const handleDeleteSession = async (convId: string) => {
+    setError(null);
+    try {
+      await apiFetch(`/ai/conversations/${encodeURIComponent(convId)}`, { method: "DELETE" });
+      const remaining = conversations.filter((c) => c.conversation_id !== convId);
+      setConversations(remaining);
+      if (activeConvId === convId) {
+        const nextId = remaining[0]?.conversation_id || null;
+        setActiveConvId(nextId);
+        setIsNewSession(nextId === null);
+        await loadSessionHistory(nextId);
+      }
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError({ msg: err.message, code: err.code, reqId: err.requestId });
+      }
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,12 +161,17 @@ export default function ChatPage() {
     setError(null);
     setActionBanner(null);
     try {
-      await apiFetch("/ai/chat", {
+      const payload: Record<string, any> = { message: input.trim() };
+      if (!isNewSession && activeConvId) {
+        payload.conversation_id = activeConvId;
+      }
+      const res = await apiFetch<{ conversation_id: string }>("/ai/chat", {
         method: "POST",
-        body: JSON.stringify({ message: input.trim(), conversation_id: messages.at(-1)?.conversation_id }),
+        body: JSON.stringify(payload),
       });
       setInput("");
-      await loadChat();
+      setIsNewSession(false);
+      await loadChat(res.conversation_id, false);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, code: err.code, reqId: err.requestId });
@@ -78,15 +188,12 @@ export default function ChatPage() {
     setError(null);
     setActionBanner(null);
     try {
-      await apiFetch(
-        `/ai/proposals/${proposal.id}/confirm`,
-        {
-          method: "POST",
-          body: JSON.stringify({ base_version: proposal.base_version ?? 0 }),
-        },
-      );
+      await apiFetch(`/ai/proposals/${proposal.id}/confirm`, {
+        method: "POST",
+        body: JSON.stringify({ base_version: proposal.base_version ?? 0 }),
+      });
       setActionBanner("Usulan berhasil dikonfirmasi dan diterapkan.");
-      await loadChat();
+      await loadChat(activeConvId, false);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, code: err.code, reqId: err.requestId });
@@ -105,7 +212,7 @@ export default function ChatPage() {
         body: JSON.stringify({}),
       });
       setActionBanner("Usulan perubahan ditolak.");
-      await loadChat();
+      await loadChat(activeConvId, false);
     } catch (err) {
       if (err instanceof ApiClientError) {
         setError({ msg: err.message, code: err.code, reqId: err.requestId });
@@ -115,7 +222,8 @@ export default function ChatPage() {
     }
   };
 
-  const needsCloudConsent = status?.degraded_reason === "ai_cloud_consent_required" || error?.code === "AI_CONSENT_REQUIRED";
+  const needsCloudConsent =
+    status?.degraded_reason === "ai_cloud_consent_required" || error?.code === "AI_CONSENT_REQUIRED";
   const aiDisabled = !status?.available || needsCloudConsent;
 
   return (
@@ -124,8 +232,8 @@ export default function ChatPage() {
         <div>
           <h1 className="text-2xl font-bold text-content">Asisten FitBudget AI</h1>
           <p className="text-sm text-muted">
-            Penjelasan rencana makan & latihan serta usulan penyesuaian terstruktur. Semua angka dihitung oleh mesin
-            deterministik.
+            Memahami seluruh segmen akun Anda: target nutrisi, rencana makan, jadwal Gym/Workout, dan catatan progres
+            harian pada setiap sesi percakapan.
           </p>
         </div>
         {status ? (
@@ -137,7 +245,8 @@ export default function ChatPage() {
                 : "border-warning-line bg-warning-soft text-warning"
             }`}
           >
-            Provider: {status.provider} {status.available ? "(Aktif)" : needsCloudConsent ? "(Menunggu persetujuan)" : "(Nonaktif)"}
+            Provider: {status.provider}{" "}
+            {status.available ? "(Aktif)" : needsCloudConsent ? "(Menunggu persetujuan)" : "(Nonaktif)"}
           </span>
         ) : null}
       </div>
@@ -172,9 +281,7 @@ export default function ChatPage() {
           role="alert"
           className="rounded-xl border border-accent-line bg-accent-soft p-4 text-sm text-accent-ink flex flex-wrap items-center justify-between gap-2"
         >
-          <span>
-            Untuk memakai Gemini, aktifkan Persetujuan AI Cloud di Pengaturan Privasi.
-          </span>
+          <span>Untuk memakai Gemini, aktifkan Persetujuan AI Cloud di Pengaturan Privasi.</span>
           <Link
             href="/settings#ai-cloud-consent"
             className="rounded bg-accent-hover px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-hover"
@@ -195,26 +302,76 @@ export default function ChatPage() {
         </div>
       ) : null}
 
+      {/* Session manager bar */}
+      <div className="rounded-xl border border-line bg-panel p-3.5 shadow-sm space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-secondary">
+            Sesi Percakapan Anda ({conversations.length})
+          </span>
+          <button
+            type="button"
+            onClick={handleNewSession}
+            data-testid="new-chat-session-btn"
+            className="rounded-lg border border-accent-line bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-ink hover:opacity-90"
+          >
+            + Sesi Baru
+          </button>
+        </div>
+        {conversations.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {conversations.map((c) => {
+              const selected = !isNewSession && activeConvId === c.conversation_id;
+              return (
+                <div
+                  key={c.conversation_id}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs ${
+                    selected
+                      ? "border-accent-line bg-accent-soft text-accent-ink font-semibold"
+                      : "border-line bg-inset text-secondary hover:bg-raised"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSession(c.conversation_id)}
+                    className="max-w-[200px] truncate text-left"
+                    title={c.title}
+                  >
+                    {c.title} ({c.message_count})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(c.conversation_id)}
+                    aria-label={`Hapus sesi ${c.title}`}
+                    className="text-muted hover:text-danger text-[11px] px-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
       {/* Message list */}
       <div
         data-testid="chat-messages-list"
         className="rounded-xl border border-line bg-panel p-4 shadow-sm space-y-4 min-h-[320px] max-h-[540px] overflow-y-auto"
       >
         {messages.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted space-y-2">
-            <p>Belum ada percakapan. Contoh pertanyaan yang dapat Anda ajukan:</p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              {[
-                "Jelaskan rencana makan dan target gizi saya saat ini.",
-                "Saya alergi telur, tolong ganti telur dari rencana makan saya.",
-                "Ubah budget harian saya menjadi Rp 45.000.",
-              ].map((q, idx) => (
+          <div className="text-center py-10 text-sm text-muted space-y-3">
+            <p className="font-medium text-secondary">
+              {isNewSession ? "Sesi percakapan baru siap dimulai." : "Belum ada percakapan."} Pilih contoh pertanyaan
+              atau ketik pesan Anda:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              {QUICK_PROMPTS.map((q, idx) => (
                 <button
                   key={idx}
                   type="button"
                   disabled={aiDisabled}
                   onClick={() => setInput(q)}
-                  className="rounded-full border border-line-strong bg-inset px-3 py-1 text-xs text-secondary hover:bg-raised disabled:opacity-50"
+                  className="rounded-full border border-line-strong bg-inset px-3 py-1.5 text-xs text-secondary hover:bg-raised disabled:opacity-50"
                 >
                   {q}
                 </button>
@@ -225,7 +382,7 @@ export default function ChatPage() {
           messages.map((m) => (
             <div
               key={m.id}
-              className={`flex flex-col space-y-2 ${m.role === "user" ? "items-end" : "items-start"}`}
+              className={`flex flex-col space-y-1.5 ${m.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
                 className={`max-w-2xl rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
@@ -234,15 +391,18 @@ export default function ChatPage() {
                     : "border border-line bg-inset text-content"
                 }`}
               >
-                <div className="text-[11px] font-semibold opacity-75 mb-1">
-                  {m.role === "user" ? "Anda" : "Asisten FitBudget"}
+                <div className="flex items-center justify-between gap-3 text-[11px] font-semibold opacity-75 mb-1">
+                  <span>{m.role === "user" ? "Anda" : "Asisten FitBudget"}</span>
+                  {m.role === "assistant" && m.explanation_source === "template" ? (
+                    <span className="rounded bg-raised px-1.5 py-0.5 text-[10px] font-normal">Ringkasan Sistem</span>
+                  ) : null}
                 </div>
                 <div>{m.content}</div>
               </div>
-
             </div>
           ))
         )}
+        <div ref={endRef} />
       </div>
 
       {proposals.length > 0 && (
@@ -275,7 +435,7 @@ export default function ChatPage() {
           placeholder={
             aiDisabled
               ? "Asisten AI sedang tidak aktif..."
-              : "Tanyakan tentang rencana makan/latihan atau minta perubahan..."
+              : "Tanyakan tentang nutrisi, menu makan, latihan Gym/Workout, progres, atau minta perubahan..."
           }
           className="min-w-0 flex-1 rounded-xl border border-line-strong bg-panel px-4 py-2.5 text-sm disabled:bg-raised"
         />
@@ -291,4 +451,3 @@ export default function ChatPage() {
     </div>
   );
 }
-

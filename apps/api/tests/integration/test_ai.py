@@ -163,3 +163,78 @@ def test_a8_a9_a10_a11_a12_a13_s7_resilience_guardrails_rate_limit_and_logs(clie
     assert secret_pw not in captured
     assert secret_chat not in captured
 
+
+def test_ai_greetings_multi_segment_context_and_sessions(client):
+    user_info = register_and_setup_user(client, "seguser@example.com", "SegUserPass123")
+    foods = client.get("/api/v1/foods").json()["items"]
+    ex_gym = next(e for e in client.get("/api/v1/exercises").json()["items"] if e["equipment"] == "gym")
+
+    # Log food, workout, and 2 weights to populate recent_progress segment
+    client.post(
+        "/api/v1/logs/food",
+        json={"date": "2026-11-19", "meal_slot": "lunch", "food_id": foods[0]["id"], "grams": 150},
+    )
+    client.post(
+        "/api/v1/logs/workout",
+        json={"date": "2026-11-19", "exercise_id": ex_gym["id"], "sets": [{"reps": 10, "weight_kg": 40}], "effort_rating": 7},
+    )
+    client.post("/api/v1/logs/weight", json={"date": "2026-11-15", "weight_kg": 71.0, "apply_to_profile": False})
+    client.post("/api/v1/logs/weight", json={"date": "2026-11-19", "weight_kg": 70.2, "apply_to_profile": False})
+
+    # Verify build_context includes all segments & zero PII
+    with session_factory()() as db:
+        ctx = build_context(db, user_info["user_id"])
+        assert "preferences" in ctx
+        assert "recent_progress" in ctx
+        assert "exercise_catalog_summary" in ctx
+        assert ctx["exercise_catalog_summary"]["total_exercises"] >= 150
+        assert ctx["recent_progress"]["weight_trend"]["trend"] == "turun"
+        ctx_str = str(ctx)
+        assert "seguser@example.com" not in ctx_str
+        assert user_info["user_id"] not in ctx_str
+
+    # Greeting returns general_chat (NOT meal plan dump)
+    r_hi = client.post("/api/v1/ai/chat", json={"message": "Hai"})
+    assert r_hi.status_code == 200
+    assert r_hi.json()["message"]["intent"] == "general_chat"
+    assert "Halo" in r_hi.json()["message"]["content"]
+    conv1 = r_hi.json()["conversation_id"]
+
+    # Second session is isolated from first session
+    r_prog = client.post("/api/v1/ai/chat", json={"message": "Bagaimana progres saya 7 hari terakhir?"})
+    assert r_prog.status_code == 200
+    assert r_prog.json()["message"]["intent"] == "explain_progress"
+    conv2 = r_prog.json()["conversation_id"]
+    assert conv2 != conv1
+
+    convs = client.get("/api/v1/ai/conversations").json()["items"]
+    assert len(convs) == 2
+
+    h1 = client.get("/api/v1/ai/history", params={"conversation_id": conv1}).json()["items"]
+    assert len(h1) == 2
+    assert all(m["conversation_id"] == conv1 for m in h1)
+
+    # Provider returning Gemini-like partial/nullable JSON is normalized cleanly instead of invalid_output
+    fake = get_fake_provider()
+    fake.next_raw_output = {
+        "intent": "propose_budget_change",
+        "explanation": "Saya mengusulkan budget harian Rp42.000. Silakan konfirmasi.",
+        "proposed_changes": [
+            {"type": "change_budget", "params": {"daily_budget_idr": 42000, "food_name": None, "from_date": None, "to_date": None}}
+        ],
+        "references": None,
+        "warnings": None,
+        "missing_params": None,
+    }
+    r_norm = client.post("/api/v1/ai/chat", json={"message": "Ubah budget jadi 42000", "conversation_id": conv2})
+    assert r_norm.status_code == 200
+    assert r_norm.json()["message"]["explanation_source"] == "llm"
+    assert r_norm.json()["proposal"] is not None
+    assert r_norm.json()["proposal"]["preview"]["daily_budget_idr"] == 42000
+
+    # Delete session 1
+    assert client.delete(f"/api/v1/ai/conversations/{conv1}").status_code == 204
+    convs_after = client.get("/api/v1/ai/conversations").json()["items"]
+    assert len(convs_after) == 1
+    assert convs_after[0]["conversation_id"] == conv2
+
